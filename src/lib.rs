@@ -1,10 +1,12 @@
+use crate::publisher::Publisher;
 use crate::subscriber::Subscriber;
 use zenoh::prelude::r#async::*;
 
+mod publisher;
 mod subscriber;
 
 pub struct Node {
-    node_name: String,
+    _node_name: String,
     zenoh_session: Session,
 }
 
@@ -12,7 +14,7 @@ impl Node {
     pub async fn new(node_name: String) -> Result<Node> {
         let zenoh_session = zenoh::open(config::default()).res().await?;
         Ok(Node {
-            node_name,
+            _node_name: node_name,
             zenoh_session,
         })
     }
@@ -25,6 +27,16 @@ impl Node {
             .await
             .unwrap();
         Ok(Subscriber { subscriber })
+    }
+
+    pub async fn publish<'a>(&'a self, topic: String) -> Result<Publisher<'a>> {
+        let publisher = self
+            .zenoh_session
+            .declare_publisher(topic)
+            .res()
+            .await
+            .unwrap();
+        Ok(Publisher { publisher })
     }
 }
 
