@@ -1,9 +1,8 @@
 use crate::Result;
-use std::io::Read;
-use zenoh::prelude::r#async::*;
+use zenoh::subscriber::FlumeSubscriber;
 
 pub struct Subscriber<'a> {
-    pub subscriber: zenoh::subscriber::FlumeSubscriber<'a>,
+    pub subscriber: FlumeSubscriber<'a>,
 }
 
 impl<'a> Subscriber<'a> {

@@ -19,7 +19,7 @@ impl Node {
         })
     }
 
-    pub async fn subscribe<'a>(&'a self, topic: String) -> Result<Subscriber<'a>> {
+    pub async fn subscribe(&self, topic: String) -> Result<Subscriber<'_>> {
         let subscriber = self
             .zenoh_session
             .declare_subscriber(&topic)
@@ -29,7 +29,7 @@ impl Node {
         Ok(Subscriber { subscriber })
     }
 
-    pub async fn publish<'a>(&'a self, topic: String) -> Result<Publisher<'a>> {
+    pub async fn publish(&self, topic: String) -> Result<Publisher<'_>> {
         let publisher = self
             .zenoh_session
             .declare_publisher(topic)
