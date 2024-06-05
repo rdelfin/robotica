@@ -11,6 +11,7 @@ pub struct Node {
 }
 
 impl Node {
+    #[allow(clippy::missing_errors_doc)]
     pub async fn new(node_name: String) -> Result<Node> {
         let zenoh_session = zenoh::open(config::default()).res().await?;
         Ok(Node {
@@ -19,6 +20,7 @@ impl Node {
         })
     }
 
+    #[allow(clippy::missing_panics_doc, clippy::missing_errors_doc)]
     pub async fn subscribe(&self, topic: String) -> Result<Subscriber<'_>> {
         let subscriber = self
             .zenoh_session
@@ -29,6 +31,7 @@ impl Node {
         Ok(Subscriber { subscriber })
     }
 
+    #[allow(clippy::missing_panics_doc, clippy::missing_errors_doc)]
     pub async fn publish(&self, topic: String) -> Result<Publisher<'_>> {
         let publisher = self
             .zenoh_session
