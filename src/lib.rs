@@ -10,10 +10,7 @@ pub struct Node {
 
 impl Node {
     pub async fn new(node_name: String) -> Result<Node> {
-        let zenoh_session = zenoh::open(config::default())
-            .res()
-            .await
-            .map_err(Error::ZenohOpen)?;
+        let zenoh_session = zenoh::open(config::default()).res().await?;
         Ok(Node {
             node_name,
             zenoh_session,
@@ -33,8 +30,10 @@ impl Node {
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("Failed to open zenoh connection: {0}")]
-    ZenohOpen(#[source] zenoh::Error),
+    #[error("zenoh error: {0}")]
+    Zenoh(#[from] zenoh::Error),
+    #[error("flume error: {0}")]
+    Flume(#[from] flume::RecvError),
 }
 
 pub type Result<T = (), E = Error> = std::result::Result<T, E>;
