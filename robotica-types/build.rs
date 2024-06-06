@@ -8,6 +8,6 @@ fn main() -> std::io::Result<()> {
         )
         .enable_type_names()
         .type_name_domain(["."], "type.googleapis.com")
-        .compile_protos(&["proto/example.proto"], &["proto/"])?;
+        .compile_protos(&["proto/types.proto"], &["proto/"])?;
     Ok(())
 }

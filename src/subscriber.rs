@@ -1,5 +1,6 @@
-use crate::{proto_types::Header, Error, Result};
+use crate::{Error, Result};
 use prost::Message;
+use robotica_types::Header;
 use std::marker::PhantomData;
 use zenoh::{prelude::r#async::*, subscriber::FlumeSubscriber};
 

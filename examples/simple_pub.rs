@@ -1,4 +1,5 @@
-use robotica::{proto_types::StringMessage, Node};
+use robotica::Node;
+use robotica_types::StringMessage;
 use std::time::Duration;
 
 #[tokio::main]

@@ -1,6 +1,7 @@
-use crate::{proto_types::Header, Result};
+use crate::Result;
 use prost::Message;
 use prost_types::Timestamp;
+use robotica_types::Header;
 use std::{marker::PhantomData, time::SystemTime};
 use zenoh::prelude::r#async::*;
 

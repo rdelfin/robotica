@@ -1786,11 +1786,20 @@ dependencies = [
  "flume",
  "futures",
  "prost",
- "prost-build",
  "prost-types",
+ "robotica-types",
  "thiserror",
  "tokio",
  "zenoh",
+]
+
+[[package]]
+name = "robotica-types"
+version = "0.1.0"
+dependencies = [
+ "prost",
+ "prost-build",
+ "prost-types",
 ]
 
 [[package]]

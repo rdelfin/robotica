@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
-use robotica::{proto_types::StringMessage, Node, Subscriber};
+use robotica::{Node, Subscriber};
+use robotica_types::StringMessage;
 use std::time::SystemTime;
 
 #[tokio::main]
