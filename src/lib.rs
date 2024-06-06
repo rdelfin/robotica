@@ -6,15 +6,16 @@ mod subscriber;
 pub use crate::publisher::Publisher;
 pub use crate::subscriber::Subscriber;
 
+/// This struct represents a node in the robotica system. This is the basic unit of interaction.
+/// This is the basic unit of interaction with robotica. Use this to create channels (publishers,
+/// subscribers, etc.), interact with the environment, and generally setup your application.
 pub struct Node {
     _node_name: String,
     zenoh_session: Session,
 }
 
 impl Node {
-    /// Creates a new node with a given name. This is the basic unit of interaction with robotica.
-    /// Use this to create channels (publishers, subscribers, etc.), interact with the environment,
-    /// and generally setup your application.
+    /// Creates a new node with a given name.
     ///
     /// # Errors
     /// This function will return an error if the zenoh session cannot be created.
