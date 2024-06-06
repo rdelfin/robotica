@@ -6,6 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+capnp = "0.19.6"
 flume = "0.11.0"
 futures = "0.3.30"
 thiserror = "1.0.61"
@@ -14,3 +15,6 @@ zenoh = "0.11.0-rc.3"
 [dev-dependencies]
 anyhow = "1.0.86"
 tokio = "1.38.0"
+
+[build-dependencies]
+capnpc = "0.19.0"

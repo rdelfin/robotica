@@ -1,9 +1,15 @@
 use crate::publisher::Publisher;
 use crate::subscriber::Subscriber;
+use capnp::traits::{FromPointerReader, OwnedStruct};
+use std::marker::PhantomData;
 use zenoh::prelude::r#async::*;
 
 mod publisher;
 mod subscriber;
+
+pub mod example_capnp {
+    include!(concat!(env!("OUT_DIR"), "/example_capnp.rs"));
+}
 
 pub struct Node {
     _node_name: String,
@@ -21,14 +27,20 @@ impl Node {
     }
 
     #[allow(clippy::missing_panics_doc, clippy::missing_errors_doc)]
-    pub async fn subscribe(&self, topic: String) -> Result<Subscriber<'_>> {
+    pub async fn subscribe<'a, Message: OwnedStruct + FromPointerReader<'a> + Default>(
+        &'a self,
+        topic: String,
+    ) -> Result<Subscriber<'a, Message>> {
         let subscriber = self
             .zenoh_session
             .declare_subscriber(&topic)
             .res()
             .await
             .unwrap();
-        Ok(Subscriber { subscriber })
+        Ok(Subscriber {
+            subscriber,
+            _phantom: PhantomData,
+        })
     }
 
     #[allow(clippy::missing_panics_doc, clippy::missing_errors_doc)]
