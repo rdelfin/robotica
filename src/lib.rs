@@ -42,14 +42,20 @@ impl Node {
     }
 
     #[allow(clippy::missing_panics_doc, clippy::missing_errors_doc)]
-    pub async fn publish(&self, topic: String) -> Result<Publisher<'_>> {
+    pub async fn publish<M: prost::Message + prost::Name>(
+        &self,
+        topic: String,
+    ) -> Result<Publisher<'_, M>> {
         let publisher = self
             .zenoh_session
             .declare_publisher(topic)
             .res()
             .await
             .unwrap();
-        Ok(Publisher { publisher })
+        Ok(Publisher {
+            publisher,
+            _phantom: PhantomData,
+        })
     }
 }
 
