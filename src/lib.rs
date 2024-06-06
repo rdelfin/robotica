@@ -1,9 +1,13 @@
-use crate::publisher::Publisher;
-use crate::subscriber::Subscriber;
+use crate::{publisher::Publisher, subscriber::Subscriber};
+use std::marker::PhantomData;
 use zenoh::prelude::r#async::*;
 
 mod publisher;
 mod subscriber;
+
+pub mod proto_types {
+    include!(concat!(env!("OUT_DIR"), "/robotica.rs"));
+}
 
 pub struct Node {
     _node_name: String,
@@ -21,14 +25,20 @@ impl Node {
     }
 
     #[allow(clippy::missing_panics_doc, clippy::missing_errors_doc)]
-    pub async fn subscribe(&self, topic: String) -> Result<Subscriber<'_>> {
+    pub async fn subscribe<M: prost::Message + prost::Name + Default>(
+        &self,
+        topic: String,
+    ) -> Result<Subscriber<'_, M>> {
         let subscriber = self
             .zenoh_session
             .declare_subscriber(&topic)
             .res()
             .await
             .unwrap();
-        Ok(Subscriber { subscriber })
+        Ok(Subscriber {
+            subscriber,
+            _phantom: PhantomData,
+        })
     }
 
     #[allow(clippy::missing_panics_doc, clippy::missing_errors_doc)]
@@ -49,6 +59,10 @@ pub enum Error {
     Zenoh(#[from] zenoh::Error),
     #[error("flume error: {0}")]
     Flume(#[from] flume::RecvError),
+    #[error("subscriber expected message of type \"{expected}\", but received message of type \"{actual}\"")]
+    MismatchedSubscriberType { expected: String, actual: String },
+    #[error("error decoding protobuf: {0}")]
+    ProtobufDecode(#[from] prost::DecodeError),
 }
 
 pub type Result<T = (), E = Error> = std::result::Result<T, E>;
