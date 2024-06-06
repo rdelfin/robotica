@@ -9,6 +9,14 @@ pub struct Subscriber<'a, M: prost::Message + prost::Name + Default> {
 }
 
 impl<'a, M: prost::Message + prost::Name + Default> Subscriber<'a, M> {
+    pub(crate) async fn new_from_session(session: &'a Session, topic: String) -> Result<Self> {
+        let subscriber = session.declare_subscriber(&topic).res().await?;
+        Ok(Subscriber {
+            subscriber,
+            _phantom: PhantomData,
+        })
+    }
+
     #[allow(clippy::missing_errors_doc, clippy::missing_panics_doc)]
     pub async fn recv(&self) -> Result<ReceivedMessage<M>> {
         let sample = self.subscriber.recv_async().await?;

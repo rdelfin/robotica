@@ -1,4 +1,3 @@
-use std::marker::PhantomData;
 use zenoh::prelude::r#async::*;
 
 mod publisher;
@@ -30,16 +29,7 @@ impl Node {
         &self,
         topic: String,
     ) -> Result<Subscriber<'_, M>> {
-        let subscriber = self
-            .zenoh_session
-            .declare_subscriber(&topic)
-            .res()
-            .await
-            .unwrap();
-        Ok(Subscriber {
-            subscriber,
-            _phantom: PhantomData,
-        })
+        Subscriber::new_from_session(&self.zenoh_session, topic).await
     }
 
     #[allow(clippy::missing_panics_doc, clippy::missing_errors_doc)]
@@ -47,16 +37,7 @@ impl Node {
         &self,
         topic: String,
     ) -> Result<Publisher<'_, M>> {
-        let publisher = self
-            .zenoh_session
-            .declare_publisher(topic)
-            .res()
-            .await
-            .unwrap();
-        Ok(Publisher {
-            publisher,
-            _phantom: PhantomData,
-        })
+        Publisher::new_from_session(&self.zenoh_session, topic).await
     }
 }
 

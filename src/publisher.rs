@@ -10,6 +10,14 @@ pub struct Publisher<'a, M: prost::Message + prost::Name> {
 }
 
 impl<'a, M: prost::Message + prost::Name> Publisher<'a, M> {
+    pub(crate) async fn new_from_session(session: &'a Session, topic: String) -> Result<Self> {
+        let publisher = session.declare_publisher(topic).res().await?;
+        Ok(Publisher {
+            publisher,
+            _phantom: PhantomData,
+        })
+    }
+
     #[allow(clippy::missing_errors_doc)]
     pub async fn send(&self, message: &M) -> Result<()> {
         let header = Header {
