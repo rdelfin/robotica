@@ -6,7 +6,7 @@ use zenoh::{prelude::r#async::*, subscriber::FlumeSubscriber};
 
 /// This struct represents a subscriber to a topic. This guarantees to return messages of type M.
 /// Note that you cannot create this struct directly, but must instead fetch one from a
-/// [`crate::Node`].
+/// [`Node`](crate::Node).
 pub struct Subscriber<'a, M: prost::Message + prost::Name + Default> {
     pub(crate) subscriber: FlumeSubscriber<'a>,
     pub(crate) _phantom: PhantomData<M>,

@@ -7,7 +7,7 @@ use zenoh::prelude::r#async::*;
 
 /// This struct represents a publisher to a topic. This will require you send messages of type M.
 /// Note that you cannot create this struct directly, but must instead fetch one from a
-/// [`crate::Node`].
+/// [`Node`](crate::Node).
 pub struct Publisher<'a, M: prost::Message + prost::Name> {
     pub publisher: zenoh::publication::Publisher<'a>,
     pub _phantom: PhantomData<M>,
