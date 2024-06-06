@@ -1,13 +1,14 @@
-use crate::{publisher::Publisher, subscriber::Subscriber};
 use std::marker::PhantomData;
 use zenoh::prelude::r#async::*;
 
 mod publisher;
 mod subscriber;
-
 pub mod proto_types {
     include!(concat!(env!("OUT_DIR"), "/robotica.rs"));
 }
+
+pub use crate::publisher::Publisher;
+pub use crate::subscriber::Subscriber;
 
 pub struct Node {
     _node_name: String,

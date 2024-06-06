@@ -9,6 +9,7 @@ pub struct Subscriber<'a, M: prost::Message + prost::Name + Default> {
 }
 
 impl<'a, M: prost::Message + prost::Name + Default> Subscriber<'a, M> {
+    #[allow(clippy::missing_errors_doc, clippy::missing_panics_doc)]
     pub async fn recv(&self) -> Result<ReceivedMessage<M>> {
         let sample = self.subscriber.recv_async().await?;
         let bytes = sample.value.payload.contiguous();

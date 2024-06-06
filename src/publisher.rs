@@ -10,6 +10,7 @@ pub struct Publisher<'a, M: prost::Message + prost::Name> {
 }
 
 impl<'a, M: prost::Message + prost::Name> Publisher<'a, M> {
+    #[allow(clippy::missing_errors_doc)]
     pub async fn send(&self, message: &M) -> Result<()> {
         let header = Header {
             message_timestamp: Some(Timestamp::from(SystemTime::now())),

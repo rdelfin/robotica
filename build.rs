@@ -6,6 +6,8 @@ fn main() -> std::io::Result<()> {
             PathBuf::from(std::env::var("OUT_DIR").expect("OUT_DIR not set"))
                 .join("file_descriptor_set.bin"),
         )
+        .enable_type_names()
+        .type_name_domain(["."], "type.googleapis.com")
         .compile_protos(&["proto/example.proto"], &["proto/"])?;
     Ok(())
 }
