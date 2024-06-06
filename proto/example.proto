@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+package robotica;
+
+message Header {
+  google.protobuf.Timestamp message_timestamp = 1;
+  string type_url = 2;
+}
+
+message StringMessage {
+  string data = 1;
+}
