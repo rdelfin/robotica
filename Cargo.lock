@@ -1874,6 +1874,7 @@ dependencies = [
  "prost-reflect",
  "prost-types",
  "robotica-types",
+ "serde_json",
  "thiserror",
  "tokio",
  "zenoh",
