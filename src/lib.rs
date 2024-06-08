@@ -49,10 +49,10 @@ impl Node {
     /// # Errors
     /// This function will return an error if the subscriber cannot be created. This usually means
     /// an error from zenoh.
-    pub async fn subscribe_untyped<I: IntoIterator<Item = &'static [u8]>>(
+    pub async fn subscribe_untyped(
         &self,
         topic: String,
-        file_descriptors_bytes: I,
+        file_descriptors_bytes: &[&[u8]],
     ) -> Result<UntypedSubscriber<'_>> {
         UntypedSubscriber::new_from_session(&self.zenoh_session, topic, file_descriptors_bytes)
             .await

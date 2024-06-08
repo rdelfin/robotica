@@ -56,15 +56,15 @@ pub struct UntypedSubscriber<'a> {
 }
 
 impl<'a> UntypedSubscriber<'a> {
-    pub(crate) async fn new_from_session<I: IntoIterator<Item = &'static [u8]>>(
+    pub(crate) async fn new_from_session(
         session: &'a Session,
         topic: String,
-        file_descriptors_bytes: I,
+        file_descriptors_bytes: &[&[u8]],
     ) -> Result<Self> {
         let subscriber = session.declare_subscriber(&topic).res().await?;
         let file_descriptor_pools = file_descriptors_bytes
-            .into_iter()
-            .map(DescriptorPool::decode)
+            .iter()
+            .map(|b| DescriptorPool::decode(*b))
             .collect::<Result<Vec<_>, _>>()?;
         Ok(UntypedSubscriber {
             subscriber,
