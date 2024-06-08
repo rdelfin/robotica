@@ -1,13 +1,13 @@
-use std::path::PathBuf;
-
-fn main() -> std::io::Result<()> {
-    prost_build::Config::new()
-        .file_descriptor_set_path(
-            PathBuf::from(std::env::var("OUT_DIR").expect("OUT_DIR not set"))
-                .join("file_descriptor_set.bin"),
-        )
+fn main() -> anyhow::Result<()> {
+    let mut config = prost_build::Config::new();
+    config
         .enable_type_names()
-        .type_name_domain(["."], "type.googleapis.com")
-        .compile_protos(&["proto/types.proto"], &["proto/"])?;
+        .type_name_domain(["."], "type.googleapis.com");
+
+    prost_reflect_build::Builder::new()
+        .file_descriptor_set_bytes("DESCRIPTOR_SET_BYTES")
+        .configure(&mut config, &["proto/types.proto"], &["proto/"])?;
+
+    config.compile_protos(&["proto/types.proto"], &["proto/"])?;
     Ok(())
 }
