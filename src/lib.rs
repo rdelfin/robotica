@@ -4,7 +4,7 @@ mod publisher;
 mod subscriber;
 
 pub use crate::publisher::Publisher;
-pub use crate::subscriber::Subscriber;
+pub use crate::subscriber::{Subscriber, UntypedSubscriber};
 
 /// This struct represents a node in the robotica system. This is the basic unit of interaction.
 /// This is the basic unit of interaction with robotica. Use this to create channels (publishers,
@@ -41,6 +41,23 @@ impl Node {
         Subscriber::new_from_session(&self.zenoh_session, topic).await
     }
 
+    /// This function creates an untyped subscriber for a given topic. The topic is a string that
+    /// uniquely identifies the data channel across an entire system. The subscriber will attempt
+    /// to dynamically decode the messages it receives by searching for a protobuf that matches the
+    /// type URL of the message in the provided file descriptors.
+    ///
+    /// # Errors
+    /// This function will return an error if the subscriber cannot be created. This usually means
+    /// an error from zenoh.
+    pub async fn subscribe_untyped<I: IntoIterator<Item = &'static [u8]>>(
+        &self,
+        topic: String,
+        file_descriptors_bytes: I,
+    ) -> Result<UntypedSubscriber<'_>> {
+        UntypedSubscriber::new_from_session(&self.zenoh_session, topic, file_descriptors_bytes)
+            .await
+    }
+
     /// This function creates a publisher for a given topic. The topic is a string that uniquely
     /// identifies the data channel across an entire system. Note that we expect the type to be a
     /// protobuf message that can be encoded.
@@ -75,6 +92,14 @@ pub enum Error {
     /// any other reason.
     #[error("error decoding protobuf: {0}")]
     ProtobufDecode(#[from] prost::DecodeError),
+    /// Failure when reading a protobuf descriptor. This error is thrown during untyped subscriber
+    /// creation.
+    #[error("error reading protobuf descriptor: {0}")]
+    ProtobufDescriptorRead(#[from] prost_reflect::DescriptorError),
+    /// A message was received with an invalid type URL, either because the type does not exist or
+    /// because we cannot parse it.
+    #[error("invalid type URL: {0}")]
+    InvalidTypeUrl(String),
 }
 
 /// A type alias for results returned by functions in this library.

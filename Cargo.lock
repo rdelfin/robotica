@@ -1871,6 +1871,7 @@ dependencies = [
  "flume",
  "futures",
  "prost",
+ "prost-reflect",
  "prost-types",
  "robotica-types",
  "thiserror",

@@ -12,6 +12,7 @@ prost-types = "0.12.6"
 thiserror = "1.0.61"
 zenoh = "0.11.0-rc.3"
 robotica-types = { version = "0.1.0", path = "robotica-types" }
+prost-reflect = { version = "0.13.1", features = ["serde", "text-format"] }
 
 [dev-dependencies]
 anyhow = "1.0.86"
