@@ -4,7 +4,7 @@ mod proto;
 mod publisher;
 mod subscriber;
 
-pub use crate::publisher::Publisher;
+pub use crate::publisher::{Publisher, UntypedPublisher};
 pub use crate::subscriber::{Subscriber, UntypedSubscriber};
 
 /// This struct represents a node in the robotica system. This is the basic unit of interaction.
@@ -72,6 +72,30 @@ impl Node {
     ) -> Result<Publisher<'_, M>> {
         Publisher::new_from_session(&self.zenoh_session, topic).await
     }
+
+    /// This function creates a dynamically-typed publisher for a given topic. The topic is a
+    /// string that uniquely identifies the data channel across an entire system. Note that we
+    /// expect the type to be specified ahead of time in the `type_url` parameter, and any
+    /// published messages should have matching JSON data, as per the official [JSON
+    /// mapping](https://protobuf.dev/programming-guides/proto3/#json).
+    ///
+    /// # Errors
+    /// This function will return an error if the publisher cannot be created. This usually means
+    /// an error from zenoh, or that the type URL doesn't exist in the provided file descriptors.
+    pub async fn publish_untyped(
+        &self,
+        topic: String,
+        type_url: String,
+        file_descriptors_bytes: &[&[u8]],
+    ) -> Result<UntypedPublisher<'_>> {
+        UntypedPublisher::new_from_session(
+            &self.zenoh_session,
+            topic,
+            type_url,
+            file_descriptors_bytes,
+        )
+        .await
+    }
 }
 
 /// The full set of errors returned by this library. Please refer to the specific enum values for
@@ -101,6 +125,9 @@ pub enum Error {
     /// because we cannot parse it.
     #[error("invalid type URL: {0}")]
     InvalidTypeUrl(String),
+    /// Error when parsing the JSON provided in the dynamic publisher.
+    #[error("invalid type URL: {0}")]
+    SerdeJsonError(#[from] serde_json::Error),
 }
 
 /// A type alias for results returned by functions in this library.

@@ -1,4 +1,7 @@
-use crate::{proto::search_file_descriptors, Error, Result};
+use crate::{
+    proto::{parse_file_descriptors, search_file_descriptors},
+    Error, Result,
+};
 use prost::Message;
 use prost_reflect::{DescriptorPool, DynamicMessage, MessageDescriptor};
 use robotica_types::Header;
@@ -62,10 +65,7 @@ impl<'a> UntypedSubscriber<'a> {
         file_descriptors_bytes: &[&[u8]],
     ) -> Result<Self> {
         let subscriber = session.declare_subscriber(&topic).res().await?;
-        let file_descriptor_pools = file_descriptors_bytes
-            .iter()
-            .map(|b| DescriptorPool::decode(*b))
-            .collect::<Result<Vec<_>, _>>()?;
+        let file_descriptor_pools = parse_file_descriptors(file_descriptors_bytes)?;
         Ok(UntypedSubscriber {
             subscriber,
             file_descriptor_pools,
