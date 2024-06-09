@@ -1,5 +1,6 @@
 use zenoh::prelude::r#async::*;
 
+mod proto;
 mod publisher;
 mod subscriber;
 

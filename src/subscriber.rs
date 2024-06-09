@@ -1,4 +1,4 @@
-use crate::{Error, Result};
+use crate::{proto::search_file_descriptors, Error, Result};
 use prost::Message;
 use prost_reflect::{DescriptorPool, DynamicMessage, MessageDescriptor};
 use robotica_types::Header;
@@ -108,21 +108,22 @@ impl<'a> UntypedSubscriber<'a> {
     }
 
     fn get_message_descriptor(&mut self, type_url: &str) -> Result<&MessageDescriptor> {
-        let message_name = type_url
-            .split('/')
-            .nth(1)
-            .ok_or_else(|| Error::InvalidTypeUrl(type_url.into()))?;
-
-        self.active_message_descriptor = if let Some((active_message_name, message_descriptor)) =
+        self.active_message_descriptor = if let Some((active_type_url, message_descriptor)) =
             self.active_message_descriptor.take()
         {
-            if active_message_name == message_name {
-                Some((active_message_name, message_descriptor))
+            if active_type_url == type_url {
+                Some((active_type_url, message_descriptor))
             } else {
-                Some((type_url.into(), self.search_file_descriptors(message_name)?))
+                Some((
+                    type_url.into(),
+                    search_file_descriptors(&self.file_descriptor_pools, type_url)?,
+                ))
             }
         } else {
-            Some((type_url.into(), self.search_file_descriptors(message_name)?))
+            Some((
+                type_url.into(),
+                search_file_descriptors(&self.file_descriptor_pools, type_url)?,
+            ))
         };
 
         Ok(&self
@@ -130,13 +131,6 @@ impl<'a> UntypedSubscriber<'a> {
             .as_ref()
             .expect("active message descriptor must be set here")
             .1)
-    }
-
-    fn search_file_descriptors(&self, message_name: &str) -> Result<MessageDescriptor> {
-        self.file_descriptor_pools
-            .iter()
-            .find_map(|pool| pool.get_message_by_name(message_name))
-            .ok_or_else(|| Error::InvalidTypeUrl(message_name.into()))
     }
 }
 
