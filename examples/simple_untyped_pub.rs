@@ -1,5 +1,4 @@
 use robotica::Node;
-use robotica_types::DESCRIPTOR_SET_BYTES;
 use std::time::Duration;
 
 #[tokio::main]
@@ -9,7 +8,6 @@ async fn main() -> anyhow::Result<()> {
         .publish_untyped(
             "test_topic".to_string(),
             "type.googleapis.com/robotica.StringMessage".to_string(),
-            &[DESCRIPTOR_SET_BYTES],
         )
         .await?;
     let mut i = 0;

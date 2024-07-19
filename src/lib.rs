@@ -13,6 +13,7 @@ pub use crate::subscriber::{Subscriber, UntypedSubscriber};
 pub struct Node {
     _node_name: String,
     zenoh_session: Session,
+    file_descriptor: Vec<&'static [u8]>,
 }
 
 impl Node {
@@ -25,7 +26,15 @@ impl Node {
         Ok(Node {
             _node_name: node_name,
             zenoh_session,
+            // We default to use our own file descriptor
+            file_descriptor: vec![robotica_types::DESCRIPTOR_SET_BYTES],
         })
+    }
+
+    /// This function allows you to override the file descriptor data used for untyped publishers
+    /// and subscribers, as well as other relevant reflection functions.
+    pub fn add_file_descriptors(&mut self, file_descriptors_bytes: &'static [u8]) {
+        self.file_descriptor.push(file_descriptors_bytes);
     }
 
     /// This function creates a subscriber for a given topic. The topic is a string that uniquely
@@ -50,13 +59,8 @@ impl Node {
     /// # Errors
     /// This function will return an error if the subscriber cannot be created. This usually means
     /// an error from zenoh.
-    pub async fn subscribe_untyped(
-        &self,
-        topic: String,
-        file_descriptors_bytes: &[&[u8]],
-    ) -> Result<UntypedSubscriber<'_>> {
-        UntypedSubscriber::new_from_session(&self.zenoh_session, topic, file_descriptors_bytes)
-            .await
+    pub async fn subscribe_untyped(&self, topic: String) -> Result<UntypedSubscriber<'_>> {
+        UntypedSubscriber::new_from_session(&self.zenoh_session, topic, &self.file_descriptor).await
     }
 
     /// This function creates a publisher for a given topic. The topic is a string that uniquely
@@ -86,13 +90,12 @@ impl Node {
         &self,
         topic: String,
         type_url: String,
-        file_descriptors_bytes: &[&[u8]],
     ) -> Result<UntypedPublisher<'_>> {
         UntypedPublisher::new_from_session(
             &self.zenoh_session,
             topic,
             type_url,
-            file_descriptors_bytes,
+            &self.file_descriptor,
         )
         .await
     }

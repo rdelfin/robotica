@@ -11,12 +11,7 @@ async fn main() -> anyhow::Result<()> {
     // Create an untyped subscriber. Notice how we're getting the file descriptors from the
     // [`robotica_types`] crate. You can also generate these yourself when creating custom protobuf
     // types.
-    let mut subscriber = node
-        .subscribe_untyped(
-            "test_topic".to_string(),
-            &[robotica_types::DESCRIPTOR_SET_BYTES],
-        )
-        .await?;
+    let mut subscriber = node.subscribe_untyped("test_topic".to_string()).await?;
     // Returned message contains a [`prost_reflect::DynamicMessage`] which can be introspected
     // into.
     while let Ok(msg) = subscriber.recv().await {
