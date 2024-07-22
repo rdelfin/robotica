@@ -22,5 +22,6 @@ tokio = "1.38.0"
 
 [workspace]
 members = [
-    "robotica-types"
+    "robotica-types",
+    "robotica-cli"
 ]

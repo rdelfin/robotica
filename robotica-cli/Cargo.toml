@@ -1,0 +1,9 @@
+[package]
+name = "robotica-cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.86"
+clap = { version = "4.5.9", features = ["derive"] }
+robotica = { version = "0.1.0", path = ".." }
