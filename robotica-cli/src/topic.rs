@@ -1,16 +1,21 @@
 use super::TopicCommands;
+use robotica::Node;
 
-pub fn topic_cmd(command: TopicCommands) {
+pub async fn topic_cmd(node: Node, command: TopicCommands) -> anyhow::Result<()> {
     match command {
-        TopicCommands::List => topic_list(),
-        TopicCommands::Sub { topic_name } => topic_sub(topic_name),
+        TopicCommands::List => topic_list().await,
+        TopicCommands::Sub { topic_name } => topic_sub(node, topic_name).await,
     }
 }
 
-fn topic_list() {
+async fn topic_list() -> anyhow::Result<()> {
     unimplemented!();
 }
 
-fn topic_sub(name: String) {
-    unimplemented!();
+async fn topic_sub(node: Node, name: String) -> anyhow::Result<()> {
+    let mut subscriber = node.subscribe_untyped(name).await?;
+    while let Ok(msg) = subscriber.recv().await {
+        println!("Got: {}", msg.message);
+    }
+    Ok(())
 }

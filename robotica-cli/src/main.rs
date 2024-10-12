@@ -1,4 +1,5 @@
 use clap::{Parser, Subcommand};
+use robotica::Node;
 
 mod topic;
 
@@ -29,9 +30,11 @@ enum TopicCommands {
     List,
 }
 
-fn main() {
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
     let args = Cli::parse();
+    let node = Node::new("cli".into()).await?;
     match args.command {
-        Commands::Topic { command } => topic::topic_cmd(command),
+        Commands::Topic { command } => topic::topic_cmd(node, command).await,
     }
 }
