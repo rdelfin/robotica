@@ -1,5 +1,6 @@
 use clap::{Parser, Subcommand};
 use robotica::Node;
+use std::path::PathBuf;
 
 mod topic;
 
@@ -8,6 +9,8 @@ mod topic;
 struct Cli {
     #[command(subcommand)]
     command: Commands,
+    #[arg(long, short)]
+    file_descriptors_paths: Vec<PathBuf>,
 }
 
 #[derive(Subcommand, Debug)]
@@ -26,6 +29,20 @@ enum TopicCommands {
         /// Name of the topic subscribed to
         topic_name: String,
     },
+    Pub {
+        /// Name of the topic subscribed to
+        topic_name: String,
+        /// The type of the message we're sending
+        topic_type: String,
+        /// The JSON data to send
+        data: String,
+        /// Frequency at which to send the data
+        #[arg(short, long, default_value_t = 1.)]
+        frequency_hz: f32,
+        /// How many messages to send. If not specified, it will run nonstop
+        #[arg(short, long)]
+        repetitions: Option<usize>,
+    },
     /// Lists out all topics currently active and publishing
     List,
 }
@@ -33,7 +50,18 @@ enum TopicCommands {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let args = Cli::parse();
-    let node = Node::new("cli".into()).await?;
+    let file_descriptors = args
+        .file_descriptors_paths
+        .into_iter()
+        .map(|path| std::fs::read(path))
+        .collect::<Result<Vec<_>, _>>()?;
+    let mut node = Node::new("cli").await?;
+    if !file_descriptors.is_empty() {
+        for file_descriptor in file_descriptors {
+            node.add_file_descriptors(&file_descriptor);
+        }
+    }
+
     match args.command {
         Commands::Topic { command } => topic::topic_cmd(node, command).await,
     }
