@@ -1,0 +1,6 @@
+[build]
+pre-build = [
+    # "dpkg --add-architecture $CROSS_DEB_ARCH",
+    "apt-get update && apt-get --assume-yes install wget unzip && rm -rf /var/lib/apt/lists/*",
+    "TEMP_DIR=`mktemp -d`; cd $TEMP_DIR && wget https://github.com/protocolbuffers/protobuf/releases/download/v28.2/protoc-28.2-linux-x86_64.zip && unzip protoc-28.2-linux-x86_64.zip && mv bin/* /usr/bin && mv include/* /usr/include && cd / && rm -rf $TEMP_DIR",
+]
