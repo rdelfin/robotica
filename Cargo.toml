@@ -7,12 +7,12 @@ edition = "2021"
 bytes = "1.6.0"
 flume = "0.11.0"
 futures = "0.3.30"
-prost = "0.12.6"
-prost-types = "0.12.6"
+prost = "0.13"
+prost-types = "0.13"
 thiserror = "1.0.61"
 zenoh = "0.11.0-rc.3"
 robotica-types = { version = "0.1.0", path = "robotica-types" }
-prost-reflect = { version = "0.13.1", features = ["serde", "text-format"] }
+prost-reflect = { version = "0.14", features = ["serde", "text-format"] }
 serde_json = "1.0.117"
 
 [dev-dependencies]

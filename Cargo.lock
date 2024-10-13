@@ -1697,7 +1697,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "deb1435c188b76130da55f17a466d252ff7b1418b2ad3e037d127b94e3411f29"
 dependencies = [
  "bytes",
- "prost-derive",
+ "prost-derive 0.12.6",
+]
+
+[[package]]
+name = "prost"
+version = "0.13.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7b0487d90e047de87f984913713b85c601c05609aad5b0df4b4573fbf69aa13f"
+dependencies = [
+ "bytes",
+ "prost-derive 0.13.3",
 ]
 
 [[package]]
@@ -1714,8 +1724,8 @@ dependencies = [
  "once_cell",
  "petgraph",
  "prettyplease",
- "prost",
- "prost-types",
+ "prost 0.12.6",
+ "prost-types 0.12.6",
  "regex",
  "syn 2.0.65",
  "tempfile",
@@ -1735,17 +1745,42 @@ dependencies = [
 ]
 
 [[package]]
+name = "prost-derive"
+version = "0.13.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e9552f850d5f0964a4e4d0bf306459ac29323ddfbae05e35a7c0d35cb0803cc5"
+dependencies = [
+ "anyhow",
+ "itertools",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.65",
+]
+
+[[package]]
 name = "prost-reflect"
 version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6f5eec97d5d34bdd17ad2db2219aabf46b054c6c41bd5529767c9ce55be5898f"
 dependencies = [
+ "once_cell",
+ "prost 0.12.6",
+ "prost-reflect-derive 0.13.0",
+ "prost-types 0.12.6",
+]
+
+[[package]]
+name = "prost-reflect"
+version = "0.14.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4b7535b02f0e5efe3e1dbfcb428be152226ed0c66cad9541f2274c8ba8d4cd40"
+dependencies = [
  "base64 0.22.1",
  "logos",
  "once_cell",
- "prost",
- "prost-reflect-derive",
- "prost-types",
+ "prost 0.13.3",
+ "prost-reflect-derive 0.14.0",
+ "prost-types 0.13.3",
  "serde",
  "serde-value",
 ]
@@ -1757,7 +1792,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "88efc86388935bd2a10db545e4aaefcd15b067f921c09001d952c3d50078e214"
 dependencies = [
  "prost-build",
- "prost-reflect",
+ "prost-reflect 0.13.1",
 ]
 
 [[package]]
@@ -1772,12 +1807,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "prost-reflect-derive"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f4fce6b22f15cc8d8d400a2b98ad29202b33bd56c7d9ddd815bc803a807ecb65"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.65",
+]
+
+[[package]]
 name = "prost-types"
 version = "0.12.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9091c90b0a32608e984ff2fa4091273cbdd755d54935c51d520887f4a1dbd5b0"
 dependencies = [
- "prost",
+ "prost 0.12.6",
+]
+
+[[package]]
+name = "prost-types"
+version = "0.13.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4759aa0d3a6232fb8dbdb97b61de2c20047c68aca932c7ed76da9d788508d670"
+dependencies = [
+ "prost 0.13.3",
 ]
 
 [[package]]
@@ -1971,9 +2026,9 @@ dependencies = [
  "chrono",
  "flume",
  "futures",
- "prost",
- "prost-reflect",
- "prost-types",
+ "prost 0.13.3",
+ "prost-reflect 0.14.2",
+ "prost-types 0.13.3",
  "robotica-types",
  "serde_json",
  "thiserror",
@@ -1996,11 +2051,11 @@ name = "robotica-types"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "prost",
+ "prost 0.13.3",
  "prost-build",
- "prost-reflect",
+ "prost-reflect 0.14.2",
  "prost-reflect-build",
- "prost-types",
+ "prost-types 0.13.3",
 ]
 
 [[package]]
