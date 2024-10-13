@@ -1,11 +1,11 @@
 use chrono::{DateTime, Utc};
-use robotica::{Node, Subscriber};
+use robotica::{LogConfig, Node, Subscriber};
 use robotica_types::StringMessage;
 use std::time::SystemTime;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let node = Node::new("simple_sub").await?;
+    let node = Node::new_with_logging("simple_sub", LogConfig::new()).await?;
     let subscriber: Subscriber<StringMessage> = node.subscribe("test_topic").await?;
     while let Ok(msg) = subscriber.recv().await {
         let system_time: SystemTime = msg

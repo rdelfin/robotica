@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand};
-use robotica::Node;
+use robotica::{log::LevelFilter, LogConfig, Node};
 use std::path::PathBuf;
 
 mod topic;
@@ -50,12 +50,13 @@ enum TopicCommands {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let args = Cli::parse();
+    let mut node =
+        Node::new_with_logging("cli", LogConfig::new().robotica_level(LevelFilter::Warn)).await?;
     let file_descriptors = args
         .file_descriptors_paths
         .into_iter()
-        .map(|path| std::fs::read(path))
+        .map(std::fs::read)
         .collect::<Result<Vec<_>, _>>()?;
-    let mut node = Node::new("cli").await?;
     if !file_descriptors.is_empty() {
         for file_descriptor in file_descriptors {
             node.add_file_descriptors(&file_descriptor);

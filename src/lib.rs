@@ -1,4 +1,10 @@
+use log::LevelFilter;
+use simple_logger::SimpleLogger;
+use tracing::info;
 use zenoh::prelude::r#async::*;
+
+pub use log;
+pub use tracing;
 
 mod proto;
 mod publisher;
@@ -11,20 +17,31 @@ pub use crate::subscriber::{Subscriber, UntypedSubscriber};
 /// This is the basic unit of interaction with robotica. Use this to create channels (publishers,
 /// subscribers, etc.), interact with the environment, and generally setup your application.
 pub struct Node {
-    _node_name: String,
+    node_name: String,
     zenoh_session: Session,
     file_descriptor: Vec<Vec<u8>>,
 }
 
 impl Node {
+    /// Creates a new node with logging enabled and a given name.
+    ///
+    /// # Errors
+    /// This function will return an error if the zenoh session cannot be created, or if logging
+    /// setup fails.
+    pub async fn new_with_logging<S: AsRef<str>>(node_name: S, logging: LogConfig) -> Result<Node> {
+        configure_logging(&logging)?;
+        Self::new(node_name).await
+    }
+
     /// Creates a new node with a given name.
     ///
     /// # Errors
     /// This function will return an error if the zenoh session cannot be created.
     pub async fn new<S: AsRef<str>>(node_name: S) -> Result<Node> {
         let zenoh_session = zenoh::open(config::default()).res().await?;
+        info!(msg = "node_created", name = node_name.as_ref());
         Ok(Node {
-            _node_name: node_name.as_ref().into(),
+            node_name: node_name.as_ref().into(),
             zenoh_session,
             // We default to use our own file descriptor
             file_descriptor: vec![robotica_types::DESCRIPTOR_SET_BYTES.to_vec()],
@@ -48,7 +65,15 @@ impl Node {
         &self,
         topic: S,
     ) -> Result<Subscriber<'_, M>> {
-        Subscriber::new_from_session(&self.zenoh_session, topic).await
+        let topic = topic.as_ref();
+        let sub = Subscriber::new_from_session(&self.zenoh_session, topic).await?;
+        info!(
+            msg = "subscriber_created",
+            name = self.node_name,
+            topic = topic,
+            type_url = M::type_url(),
+        );
+        Ok(sub)
     }
 
     /// This function creates an untyped subscriber for a given topic. The topic is a string that
@@ -63,7 +88,17 @@ impl Node {
         &self,
         topic: S,
     ) -> Result<UntypedSubscriber<'_>> {
-        UntypedSubscriber::new_from_session(&self.zenoh_session, topic, &self.file_descriptor).await
+        let topic = topic.as_ref();
+        let sub =
+            UntypedSubscriber::new_from_session(&self.zenoh_session, topic, &self.file_descriptor)
+                .await?;
+        info!(
+            msg = "subscriber_created",
+            name = self.node_name,
+            topic = topic,
+            type_url = "unknown",
+        );
+        Ok(sub)
     }
 
     /// This function creates a publisher for a given topic. The topic is a string that uniquely
@@ -77,7 +112,15 @@ impl Node {
         &self,
         topic: S,
     ) -> Result<Publisher<'_, M>> {
-        Publisher::new_from_session(&self.zenoh_session, topic).await
+        let topic = topic.as_ref();
+        let publisher = Publisher::new_from_session(&self.zenoh_session, topic).await?;
+        info!(
+            msg = "publisher_created",
+            name = self.node_name,
+            topic = topic,
+            type_url = M::type_url(),
+        );
+        Ok(publisher)
     }
 
     /// This function creates a dynamically-typed publisher for a given topic. The topic is a
@@ -94,14 +137,78 @@ impl Node {
         topic: S,
         type_url: S2,
     ) -> Result<UntypedPublisher<'_>> {
-        UntypedPublisher::new_from_session(
+        let topic = topic.as_ref();
+        let type_url = type_url.as_ref();
+        let publisher = UntypedPublisher::new_from_session(
             &self.zenoh_session,
             topic,
             type_url,
             &self.file_descriptor,
         )
-        .await
+        .await?;
+        info!(
+            msg = "publisher_created",
+            name = self.node_name,
+            topic = topic,
+            type_url = type_url,
+        );
+        Ok(publisher)
     }
+}
+
+/// Configuration for the logging setup
+pub struct LogConfig {
+    default_level: LevelFilter,
+    zenoh_level: LevelFilter,
+    robotica_level: LevelFilter,
+}
+
+impl LogConfig {
+    /// Create a log config with default values
+    #[must_use]
+    pub fn new() -> LogConfig {
+        Self::default()
+    }
+
+    /// Sets the level to log at as default.
+    #[must_use]
+    pub fn default_level(mut self, l: LevelFilter) -> LogConfig {
+        self.default_level = l;
+        self
+    }
+
+    /// Sets the level to log the zenoh internals at.
+    #[must_use]
+    pub fn zenoh_level(mut self, l: LevelFilter) -> LogConfig {
+        self.zenoh_level = l;
+        self
+    }
+
+    /// Sets the level to log the robotica internals at.
+    #[must_use]
+    pub fn robotica_level(mut self, l: LevelFilter) -> LogConfig {
+        self.robotica_level = l;
+        self
+    }
+}
+
+impl Default for LogConfig {
+    fn default() -> LogConfig {
+        LogConfig {
+            default_level: LevelFilter::Info,
+            zenoh_level: LevelFilter::Warn,
+            robotica_level: LevelFilter::Info,
+        }
+    }
+}
+
+fn configure_logging(log_config: &LogConfig) -> Result<()> {
+    SimpleLogger::new()
+        .with_level(log_config.default_level)
+        .with_module_level("zenoh", log_config.zenoh_level)
+        .with_module_level("robotica", log_config.robotica_level)
+        .init()?;
+    Ok(())
 }
 
 /// The full set of errors returned by this library. Please refer to the specific enum values for
@@ -134,6 +241,9 @@ pub enum Error {
     /// Error when parsing the JSON provided in the dynamic publisher.
     #[error("invalid type URL: {0}")]
     SerdeJsonError(#[from] serde_json::Error),
+    /// Error when parsing the JSON provided in the dynamic publisher.
+    #[error("error with logging: {0}")]
+    LogSetupError(#[from] log::SetLoggerError),
 }
 
 /// A type alias for results returned by functions in this library.

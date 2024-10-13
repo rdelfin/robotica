@@ -1,10 +1,10 @@
-use robotica::Node;
+use robotica::{LogConfig, Node};
 use robotica_types::StringMessage;
 use std::time::Duration;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let node = Node::new("simple_pub").await?;
+    let node = Node::new_with_logging("simple_pub", LogConfig::new()).await?;
     let publisher = node.publish("test_topic").await?;
     let mut i = 0;
     loop {

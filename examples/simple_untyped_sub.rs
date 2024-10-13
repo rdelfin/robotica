@@ -1,12 +1,12 @@
 use chrono::{DateTime, Utc};
 use prost_reflect::SerializeOptions;
-use robotica::Node;
+use robotica::{LogConfig, Node};
 use std::time::SystemTime;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     // Create a new node with the name "simple_sub".
-    let node = Node::new("simple_sub").await?;
+    let node = Node::new_with_logging("simple_sub", LogConfig::new()).await?;
 
     // Create an untyped subscriber. Notice how we're getting the file descriptors from the
     // [`robotica_types`] crate. You can also generate these yourself when creating custom protobuf

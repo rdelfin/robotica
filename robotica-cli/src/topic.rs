@@ -2,6 +2,7 @@ use super::TopicCommands;
 use robotica::Node;
 use std::time::Duration;
 
+#[allow(clippy::module_name_repetitions)]
 pub async fn topic_cmd(node: Node, command: TopicCommands) -> anyhow::Result<()> {
     match command {
         TopicCommands::List => topic_list().await,
@@ -26,6 +27,7 @@ pub async fn topic_cmd(node: Node, command: TopicCommands) -> anyhow::Result<()>
     }
 }
 
+#[allow(clippy::unused_async)]
 async fn topic_list() -> anyhow::Result<()> {
     unimplemented!();
 }

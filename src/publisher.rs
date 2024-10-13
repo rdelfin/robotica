@@ -8,6 +8,7 @@ use prost_types::Timestamp;
 use robotica_types::Header;
 use serde_json::Value;
 use std::{marker::PhantomData, time::SystemTime};
+use tracing::instrument;
 use zenoh::prelude::r#async::*;
 
 /// This struct represents a publisher to a topic. This will require you send messages of type M.
@@ -39,6 +40,7 @@ impl<'a, M: prost::Message + prost::Name> Publisher<'a, M> {
     /// # Errors
     /// This function will return an error if the message cannot be sent for any reason. In
     /// practice, this means there was an error returned by zenoh when sending down the channel.
+    #[instrument(level = "trace", skip_all)]
     pub async fn send(&self, message: &M) -> Result<()> {
         let header = Header {
             message_timestamp: Some(Timestamp::from(SystemTime::now())),
@@ -90,6 +92,7 @@ impl<'a> UntypedPublisher<'a> {
     /// This function will return an error if the message cannot be sent for any reason. In
     /// practice, this means there was an error returned by zenoh when sending down the channel, or
     /// an error while attempting to encode the message dynamically.
+    #[instrument(level = "trace", skip_all)]
     pub async fn send(&self, json_value: Value) -> Result<()> {
         let json_string = json_value.to_string();
         let mut deserializer = serde_json::Deserializer::from_str(&json_string);

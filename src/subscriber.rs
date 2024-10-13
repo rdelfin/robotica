@@ -6,6 +6,7 @@ use prost::Message;
 use prost_reflect::{DescriptorPool, DynamicMessage, MessageDescriptor};
 use robotica_types::Header;
 use std::marker::PhantomData;
+use tracing::instrument;
 use zenoh::{prelude::r#async::*, subscriber::FlumeSubscriber};
 
 /// This struct represents a subscriber to a topic. This guarantees to return messages of type M.
@@ -35,6 +36,7 @@ impl<'a, M: prost::Message + prost::Name + Default> Subscriber<'a, M> {
     /// This function will return an error if the message cannot be received for any reason. In
     /// practice, this means either an error was returned by zenoh, or we failed to decode the
     /// protobuf data.
+    #[instrument(level = "trace", skip_all)]
     pub async fn recv(&self) -> Result<ReceivedMessage<M>> {
         let sample = self.subscriber.recv_async().await?;
         let bytes = sample.value.payload.contiguous();
@@ -90,6 +92,7 @@ impl<'a> UntypedSubscriber<'a> {
     ///
     /// # Panics
     /// This function will only panic if a u64 cannot be converted to a usize on your system.
+    #[instrument(level = "trace", skip_all)]
     pub async fn recv(&mut self) -> Result<ReceivedMessage<DynamicMessage>> {
         // Fetch message bytes and decode the header
         let sample = self.subscriber.recv_async().await?;
