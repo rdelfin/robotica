@@ -21,10 +21,10 @@ impl Node {
     ///
     /// # Errors
     /// This function will return an error if the zenoh session cannot be created.
-    pub async fn new(node_name: String) -> Result<Node> {
+    pub async fn new<S: AsRef<str>>(node_name: S) -> Result<Node> {
         let zenoh_session = zenoh::open(config::default()).res().await?;
         Ok(Node {
-            _node_name: node_name,
+            _node_name: node_name.as_ref().into(),
             zenoh_session,
             // We default to use our own file descriptor
             file_descriptor: vec![robotica_types::DESCRIPTOR_SET_BYTES],

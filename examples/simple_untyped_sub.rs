@@ -6,7 +6,7 @@ use std::time::SystemTime;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     // Create a new node with the name "simple_sub".
-    let node = Node::new("simple_sub".to_string()).await?;
+    let node = Node::new("simple_sub").await?;
 
     // Create an untyped subscriber. Notice how we're getting the file descriptors from the
     // [`robotica_types`] crate. You can also generate these yourself when creating custom protobuf
