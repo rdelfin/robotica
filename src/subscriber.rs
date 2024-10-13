@@ -65,7 +65,7 @@ impl<'a> UntypedSubscriber<'a> {
     pub(crate) async fn new_from_session<S: AsRef<str>>(
         session: &'a Session,
         topic: S,
-        file_descriptors_bytes: &[&[u8]],
+        file_descriptors_bytes: &[Vec<u8>],
     ) -> Result<Self> {
         let subscriber = session.declare_subscriber(topic.as_ref()).res().await?;
         let file_descriptor_pools = parse_file_descriptors(file_descriptors_bytes)?;

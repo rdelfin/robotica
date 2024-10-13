@@ -13,7 +13,7 @@ pub use crate::subscriber::{Subscriber, UntypedSubscriber};
 pub struct Node {
     _node_name: String,
     zenoh_session: Session,
-    file_descriptor: Vec<&'static [u8]>,
+    file_descriptor: Vec<Vec<u8>>,
 }
 
 impl Node {
@@ -27,14 +27,14 @@ impl Node {
             _node_name: node_name.as_ref().into(),
             zenoh_session,
             // We default to use our own file descriptor
-            file_descriptor: vec![robotica_types::DESCRIPTOR_SET_BYTES],
+            file_descriptor: vec![robotica_types::DESCRIPTOR_SET_BYTES.to_vec()],
         })
     }
 
     /// This function allows you to override the file descriptor data used for untyped publishers
     /// and subscribers, as well as other relevant reflection functions.
-    pub fn add_file_descriptors(&mut self, file_descriptors_bytes: &'static [u8]) {
-        self.file_descriptor.push(file_descriptors_bytes);
+    pub fn add_file_descriptors(&mut self, file_descriptors_bytes: &[u8]) {
+        self.file_descriptor.push(file_descriptors_bytes.to_vec());
     }
 
     /// This function creates a subscriber for a given topic. The topic is a string that uniquely

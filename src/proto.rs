@@ -21,11 +21,11 @@ pub(crate) fn search_file_descriptors(
 
 /// This function parses the provided file descriptor bytes into a set of descriptor pools.
 pub(crate) fn parse_file_descriptors(
-    file_descriptors_bytes: &[&[u8]],
+    file_descriptors_bytes: &[Vec<u8>],
 ) -> Result<Vec<DescriptorPool>> {
     Ok(file_descriptors_bytes
         .iter()
-        .map(|b| DescriptorPool::decode(*b))
+        .map(|b| DescriptorPool::decode(&b[..]))
         .collect::<Result<Vec<_>, _>>()?)
 }
 

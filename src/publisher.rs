@@ -66,7 +66,7 @@ impl<'a> UntypedPublisher<'a> {
         session: &'a Session,
         topic: S,
         type_url: S2,
-        file_descriptors_bytes: &[&[u8]],
+        file_descriptors_bytes: &[Vec<u8>],
     ) -> Result<UntypedPublisher<'a>> {
         let type_url = type_url.as_ref();
         let file_descriptor_pools = parse_file_descriptors(file_descriptors_bytes)?;
