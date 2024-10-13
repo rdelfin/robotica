@@ -17,8 +17,11 @@ pub struct Subscriber<'a, M: prost::Message + prost::Name + Default> {
 }
 
 impl<'a, M: prost::Message + prost::Name + Default> Subscriber<'a, M> {
-    pub(crate) async fn new_from_session(session: &'a Session, topic: String) -> Result<Self> {
-        let subscriber = session.declare_subscriber(&topic).res().await?;
+    pub(crate) async fn new_from_session<S: AsRef<str>>(
+        session: &'a Session,
+        topic: S,
+    ) -> Result<Self> {
+        let subscriber = session.declare_subscriber(topic.as_ref()).res().await?;
         Ok(Subscriber {
             subscriber,
             _phantom: PhantomData,
@@ -59,12 +62,12 @@ pub struct UntypedSubscriber<'a> {
 }
 
 impl<'a> UntypedSubscriber<'a> {
-    pub(crate) async fn new_from_session(
+    pub(crate) async fn new_from_session<S: AsRef<str>>(
         session: &'a Session,
-        topic: String,
+        topic: S,
         file_descriptors_bytes: &[&[u8]],
     ) -> Result<Self> {
-        let subscriber = session.declare_subscriber(&topic).res().await?;
+        let subscriber = session.declare_subscriber(topic.as_ref()).res().await?;
         let file_descriptor_pools = parse_file_descriptors(file_descriptors_bytes)?;
         Ok(UntypedSubscriber {
             subscriber,

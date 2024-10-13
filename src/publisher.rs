@@ -19,8 +19,14 @@ pub struct Publisher<'a, M: prost::Message + prost::Name> {
 }
 
 impl<'a, M: prost::Message + prost::Name> Publisher<'a, M> {
-    pub(crate) async fn new_from_session(session: &'a Session, topic: String) -> Result<Self> {
-        let publisher = session.declare_publisher(topic).res().await?;
+    pub(crate) async fn new_from_session<S: AsRef<str>>(
+        session: &'a Session,
+        topic: S,
+    ) -> Result<Self> {
+        let publisher = session
+            .declare_publisher(topic.as_ref().to_string())
+            .res()
+            .await?;
         Ok(Publisher {
             publisher,
             _phantom: PhantomData,
@@ -56,19 +62,23 @@ pub struct UntypedPublisher<'a> {
 }
 
 impl<'a> UntypedPublisher<'a> {
-    pub(crate) async fn new_from_session(
+    pub(crate) async fn new_from_session<S: AsRef<str>, S2: AsRef<str>>(
         session: &'a Session,
-        topic: String,
-        type_url: String,
+        topic: S,
+        type_url: S2,
         file_descriptors_bytes: &[&[u8]],
     ) -> Result<UntypedPublisher<'a>> {
+        let type_url = type_url.as_ref();
         let file_descriptor_pools = parse_file_descriptors(file_descriptors_bytes)?;
-        let message_descriptor = search_file_descriptors(&file_descriptor_pools, &type_url)?;
-        let publisher = session.declare_publisher(topic).res().await?;
+        let message_descriptor = search_file_descriptors(&file_descriptor_pools, type_url)?;
+        let publisher = session
+            .declare_publisher(topic.as_ref().to_string())
+            .res()
+            .await?;
         Ok(UntypedPublisher {
             publisher,
             message_descriptor,
-            type_url,
+            type_url: type_url.into(),
         })
     }
 

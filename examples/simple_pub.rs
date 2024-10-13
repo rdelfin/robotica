@@ -5,7 +5,7 @@ use std::time::Duration;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let node = Node::new("simple_pub").await?;
-    let publisher = node.publish("test_topic".to_string()).await?;
+    let publisher = node.publish("test_topic").await?;
     let mut i = 0;
     loop {
         let data = format!("Hello, World! {i}");

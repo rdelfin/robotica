@@ -44,9 +44,9 @@ impl Node {
     /// # Errors
     /// This function will return an error if the subscriber cannot be created. This usually means
     /// an error from zenoh.
-    pub async fn subscribe<M: prost::Message + prost::Name + Default>(
+    pub async fn subscribe<M: prost::Message + prost::Name + Default, S: AsRef<str>>(
         &self,
-        topic: String,
+        topic: S,
     ) -> Result<Subscriber<'_, M>> {
         Subscriber::new_from_session(&self.zenoh_session, topic).await
     }
@@ -59,7 +59,10 @@ impl Node {
     /// # Errors
     /// This function will return an error if the subscriber cannot be created. This usually means
     /// an error from zenoh.
-    pub async fn subscribe_untyped(&self, topic: String) -> Result<UntypedSubscriber<'_>> {
+    pub async fn subscribe_untyped<S: AsRef<str>>(
+        &self,
+        topic: S,
+    ) -> Result<UntypedSubscriber<'_>> {
         UntypedSubscriber::new_from_session(&self.zenoh_session, topic, &self.file_descriptor).await
     }
 
@@ -70,9 +73,9 @@ impl Node {
     /// # Errors
     /// This function will return an error if the publisher cannot be created. This usually means
     /// an error from zenoh.
-    pub async fn publish<M: prost::Message + prost::Name>(
+    pub async fn publish<M: prost::Message + prost::Name, S: AsRef<str>>(
         &self,
-        topic: String,
+        topic: S,
     ) -> Result<Publisher<'_, M>> {
         Publisher::new_from_session(&self.zenoh_session, topic).await
     }
@@ -86,10 +89,10 @@ impl Node {
     /// # Errors
     /// This function will return an error if the publisher cannot be created. This usually means
     /// an error from zenoh, or that the type URL doesn't exist in the provided file descriptors.
-    pub async fn publish_untyped(
+    pub async fn publish_untyped<S: AsRef<str>, S2: AsRef<str>>(
         &self,
-        topic: String,
-        type_url: String,
+        topic: S,
+        type_url: S2,
     ) -> Result<UntypedPublisher<'_>> {
         UntypedPublisher::new_from_session(
             &self.zenoh_session,

@@ -6,7 +6,7 @@ use std::time::SystemTime;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let node = Node::new("simple_sub").await?;
-    let subscriber: Subscriber<StringMessage> = node.subscribe("test_topic".to_string()).await?;
+    let subscriber: Subscriber<StringMessage> = node.subscribe("test_topic").await?;
     while let Ok(msg) = subscriber.recv().await {
         let system_time: SystemTime = msg
             .header

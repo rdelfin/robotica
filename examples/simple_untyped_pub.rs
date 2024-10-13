@@ -5,10 +5,7 @@ use std::time::Duration;
 async fn main() -> anyhow::Result<()> {
     let node = Node::new("simple_pub").await?;
     let publisher = node
-        .publish_untyped(
-            "test_topic".to_string(),
-            "type.googleapis.com/robotica.StringMessage".to_string(),
-        )
+        .publish_untyped("test_topic", "type.googleapis.com/robotica.StringMessage")
         .await?;
     let mut i = 0;
     loop {
