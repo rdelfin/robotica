@@ -1,5 +1,10 @@
 use log::LevelFilter;
+use prost::Message;
+use robotica_types::{PublisherInfo, PublisherList, SubscriberInfo, SubscriberList};
 use simple_logger::SimpleLogger;
+use std::collections::HashSet;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 use tracing::info;
 use zenoh::query::ConsolidationMode;
 use zenoh::Session;
@@ -20,7 +25,14 @@ pub use crate::subscriber::{Subscriber, UntypedSubscriber};
 pub struct Node {
     node_name: String,
     zenoh_session: Session,
+    pubsub_data: Arc<Mutex<PubsubData>>,
     file_descriptor: Vec<Vec<u8>>,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+struct PubsubData {
+    publishers: HashSet<String>,
+    subscribers: HashSet<String>,
 }
 
 impl Node {
@@ -41,28 +53,16 @@ impl Node {
     #[allow(clippy::missing_panics_doc)]
     pub async fn new<S: AsRef<str>>(node_name: S) -> Result<Node> {
         let zenoh_session = zenoh::open(zenoh::Config::default()).await?;
-        let queryable = zenoh_session
-            .declare_queryable("robotica/node_names")
-            .with(flume::unbounded())
-            .await?;
+        let pubsub_data: Arc<Mutex<PubsubData>> = Arc::default();
+
         let node_name = node_name.as_ref().to_string();
-        let node_name_clone = node_name.clone();
-        let _jh = tokio::spawn(async move {
-            if let Err(e) = node_name_queryable(queryable, node_name_clone).await {
-                if !matches!(e, Error::Flume(flume::RecvError::Disconnected)) {
-                    tracing::error!(
-                        msg = "error_node_queryable",
-                        error = ?e,
-                        "Error in node queryable, this is a bug in robotica",
-                    );
-                    panic!("Error in node queryable");
-                }
-            }
-        });
+        start_queriables(&zenoh_session, &node_name, pubsub_data.clone()).await?;
+
         info!(msg = "node_created", name = node_name);
         Ok(Node {
             node_name,
             zenoh_session,
+            pubsub_data,
             // We default to use our own file descriptor
             file_descriptor: vec![robotica_types::DESCRIPTOR_SET_BYTES.to_vec()],
         })
@@ -86,7 +86,9 @@ impl Node {
         topic: S,
     ) -> Result<Subscriber<M>> {
         let topic = topic.as_ref();
-        let sub = Subscriber::new_from_session(&self.zenoh_session, topic).await?;
+        let sub =
+            Subscriber::new_from_session(&self.zenoh_session, topic, self.pubsub_data.clone())
+                .await?;
         info!(
             msg = "subscriber_created",
             name = self.node_name,
@@ -106,9 +108,13 @@ impl Node {
     /// an error from zenoh.
     pub async fn subscribe_untyped<S: AsRef<str>>(&self, topic: S) -> Result<UntypedSubscriber> {
         let topic = topic.as_ref();
-        let sub =
-            UntypedSubscriber::new_from_session(&self.zenoh_session, topic, &self.file_descriptor)
-                .await?;
+        let sub = UntypedSubscriber::new_from_session(
+            &self.zenoh_session,
+            topic,
+            &self.file_descriptor,
+            self.pubsub_data.clone(),
+        )
+        .await?;
         info!(
             msg = "subscriber_created",
             name = self.node_name,
@@ -130,7 +136,9 @@ impl Node {
         topic: S,
     ) -> Result<Publisher<'_, M>> {
         let topic = topic.as_ref();
-        let publisher = Publisher::new_from_session(&self.zenoh_session, topic).await?;
+        let publisher =
+            Publisher::new_from_session(&self.zenoh_session, topic, self.pubsub_data.clone())
+                .await?;
         info!(
             msg = "publisher_created",
             name = self.node_name,
@@ -160,6 +168,7 @@ impl Node {
             &self.zenoh_session,
             topic,
             type_url,
+            self.pubsub_data.clone(),
             &self.file_descriptor,
         )
         .await?;
@@ -177,32 +186,125 @@ impl Node {
     /// # Errors
     /// As this uses the zenoh query function, any error returned to us by zenoh will be passed on
     /// to you.
-    pub async fn list_nodes(&self) -> Result<Vec<String>> {
-        let get = self
+    pub async fn list_nodes(&self) -> Result<HashSet<String>> {
+        let recv = self
             .zenoh_session
             .get("robotica/node_names")
             .consolidation(ConsolidationMode::None)
             // .timeout(Duration::from_millis(500))
             .with(flume::unbounded())
             .await?;
-        let mut result = Vec::new();
-        loop {
-            let msg = get.recv_async().await;
-            match msg {
-                Ok(msg) => {
-                    let bytes = msg.result()?.payload().to_bytes();
-                    let node_name = String::from_utf8_lossy(bytes.as_ref());
-                    result.push(node_name.into());
-                }
-                Err(e) => {
-                    println!("Exiting with error: {e}");
-                    break;
-                }
-            }
+        let mut result = HashSet::new();
+        while let Ok(msg) = recv.recv_async().await {
+            let bytes = msg.result()?.payload().to_bytes();
+            let node_name = String::from_utf8_lossy(bytes.as_ref());
+            result.insert(node_name.into());
         }
 
         Ok(result)
     }
+
+    /// This function returns the list of subscribers a given node has currently active. We do so
+    /// by sending a query to that specific node requesting the information.
+    ///
+    /// # Errors
+    /// This will return an error if we fail to talk to the node over zenoh, if the data is
+    /// incorrect, or simply if there's no response
+    pub async fn list_nodes_subscribers(&self, node_name: &str) -> Result<Vec<SubscriberInfo>> {
+        let recv = self
+            .zenoh_session
+            .get(format!("robotica/node/{node_name}/subscribers"))
+            .with(flume::unbounded())
+            .await?;
+        let msg = recv.recv_async().await?;
+        let bytes = msg.result()?.payload().to_bytes();
+        let proto = SubscriberList::decode_length_delimited(bytes.as_ref())?;
+        Ok(proto.subscribers)
+    }
+
+    /// This function returns the list of publishers a given node has currently active. We do so by
+    /// sending a query to that specific node requesting the information.
+    ///
+    /// # Errors
+    /// This will return an error if we fail to talk to the node over zenoh, if the data is
+    /// incorrect, or simply if there's no response
+    pub async fn list_nodes_publishers(&self, node_name: &str) -> Result<Vec<PublisherInfo>> {
+        let recv = self
+            .zenoh_session
+            .get(format!("robotica/node/{node_name}/publishers"))
+            .with(flume::unbounded())
+            .await?;
+        let msg = recv.recv_async().await?;
+        let bytes = msg.result()?.payload().to_bytes();
+        let proto = PublisherList::decode_length_delimited(bytes.as_ref())?;
+        Ok(proto.publishers)
+    }
+}
+
+async fn start_queriables(
+    session: &Session,
+    node_name: &str,
+    pubsub_data: Arc<Mutex<PubsubData>>,
+) -> Result {
+    // Node name queryable
+    let queryable = session
+        .declare_queryable("robotica/node_names")
+        .with(flume::unbounded())
+        .await?;
+    let node_name_clone = node_name.to_string();
+    tokio::spawn(async move {
+        if let Err(e) = node_name_queryable(queryable, node_name_clone).await {
+            if !matches!(e, Error::Flume(flume::RecvError::Disconnected)) {
+                tracing::error!(
+                    msg = "error_node_queryable",
+                    error = ?e,
+                    "Error in node queryable, this is a bug in robotica",
+                );
+                panic!("Error in node queryable");
+            }
+        }
+    });
+
+    // Subscriber list
+    let queryable = session
+        .declare_queryable(format!("robotica/node/{node_name}/subscribers"))
+        .with(flume::unbounded())
+        .await?;
+    let node_name_clone = node_name.to_string();
+    let pubsub_data_clone = pubsub_data.clone();
+    tokio::spawn(async move {
+        if let Err(e) = subscribers_queryable(queryable, node_name_clone, pubsub_data_clone).await {
+            if !matches!(e, Error::Flume(flume::RecvError::Disconnected)) {
+                tracing::error!(
+                    msg = "error_node_queryable",
+                    error = ?e,
+                    "Error in node queryable, this is a bug in robotica",
+                );
+                panic!("Error in node queryable");
+            }
+        }
+    });
+
+    // Pubisher list
+    let queryable = session
+        .declare_queryable(format!("robotica/node/{node_name}/publishers"))
+        .with(flume::unbounded())
+        .await?;
+    let node_name_clone = node_name.to_string();
+    tokio::spawn(async move {
+        if let Err(e) = publishers_queryable(queryable, node_name_clone, pubsub_data).await {
+            if !matches!(e, Error::Flume(flume::RecvError::Disconnected)) {
+                tracing::error!(
+                    msg = "error_node_queryable",
+                    error = ?e,
+                    "Error in node queryable, this is a bug in robotica",
+                );
+                panic!("Error in node queryable");
+            }
+        }
+    });
+
+    Ok(())
 }
 
 async fn node_name_queryable(
@@ -212,6 +314,58 @@ async fn node_name_queryable(
     loop {
         let query = queryable.recv_async().await?;
         query.reply("robotica/node_names", &node_name).await?;
+    }
+}
+
+async fn subscribers_queryable(
+    queryable: zenoh::query::Queryable<flume::Receiver<zenoh::query::Query>>,
+    node_name: String,
+    pubsub_data: Arc<Mutex<PubsubData>>,
+) -> Result {
+    loop {
+        let query = queryable.recv_async().await?;
+        let msg = {
+            let data = pubsub_data.lock().await;
+            SubscriberList {
+                subscribers: data
+                    .subscribers
+                    .iter()
+                    .map(|name| SubscriberInfo { name: name.into() })
+                    .collect(),
+            }
+        };
+        query
+            .reply(
+                format!("robotica/node/{node_name}/subscribers"),
+                &msg.encode_length_delimited_to_vec(),
+            )
+            .await?;
+    }
+}
+
+async fn publishers_queryable(
+    queryable: zenoh::query::Queryable<flume::Receiver<zenoh::query::Query>>,
+    node_name: String,
+    pubsub_data: Arc<Mutex<PubsubData>>,
+) -> Result {
+    loop {
+        let query = queryable.recv_async().await?;
+        let msg = {
+            let data = pubsub_data.lock().await;
+            PublisherList {
+                publishers: data
+                    .publishers
+                    .iter()
+                    .map(|name| PublisherInfo { name: name.into() })
+                    .collect(),
+            }
+        };
+        query
+            .reply(
+                format!("robotica/node/{node_name}/publishers"),
+                &msg.encode_length_delimited_to_vec(),
+            )
+            .await?;
     }
 }
 

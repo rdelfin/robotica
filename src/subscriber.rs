@@ -1,12 +1,14 @@
 use crate::{
     proto::{parse_file_descriptors, search_file_descriptors},
-    Error, Result,
+    Error, PubsubData, Result,
 };
 use prost::Message;
 use prost_reflect::{DescriptorPool, DynamicMessage, MessageDescriptor};
 use robotica_types::Header;
 use std::marker::PhantomData;
-use tracing::instrument;
+use std::sync::Arc;
+use tokio::sync::Mutex;
+use tracing::{instrument, warn};
 use zenoh::{sample::Sample, Session};
 
 /// This struct represents a subscriber to a topic. This guarantees to return messages of type M.
@@ -14,6 +16,8 @@ use zenoh::{sample::Sample, Session};
 /// [`Node`](crate::Node).
 pub struct Subscriber<M: prost::Message + prost::Name + Default> {
     subscriber: zenoh::pubsub::Subscriber<flume::Receiver<Sample>>,
+    pubsub_data: Arc<Mutex<PubsubData>>,
+    topic: String,
     _phantom: PhantomData<M>,
 }
 
@@ -21,13 +25,18 @@ impl<M: prost::Message + prost::Name + Default> Subscriber<M> {
     pub(crate) async fn new_from_session<S: AsRef<str>>(
         session: &Session,
         topic: S,
+        pubsub_data: Arc<Mutex<PubsubData>>,
     ) -> Result<Self> {
+        let topic = topic.as_ref();
         let subscriber = session
-            .declare_subscriber(format!("robotica/pubsub/{}", topic.as_ref()))
+            .declare_subscriber(format!("robotica/pubsub/{topic}"))
             .with(flume::bounded(100))
             .await?;
+        pubsub_data.lock().await.subscribers.insert(topic.into());
         Ok(Subscriber {
             subscriber,
+            pubsub_data,
+            topic: topic.into(),
             _phantom: PhantomData,
         })
     }
@@ -59,11 +68,30 @@ impl<M: prost::Message + prost::Name + Default> Subscriber<M> {
     }
 }
 
+impl<M: prost::Message + prost::Name + Default> Drop for Subscriber<M> {
+    fn drop(&mut self) {
+        if !self
+            .pubsub_data
+            .blocking_lock()
+            .subscribers
+            .remove(&self.topic)
+        {
+            warn!(
+                msg = "subscriber_remove_issue",
+                topic = self.topic,
+                "We tried to remove subscriber from active list, but it was already gone. This is likely a bug",
+            );
+        }
+    }
+}
+
 #[allow(clippy::module_name_repetitions)]
 pub struct UntypedSubscriber {
     subscriber: zenoh::pubsub::Subscriber<flume::Receiver<Sample>>,
     file_descriptor_pools: Vec<DescriptorPool>,
     active_message_descriptor: Option<(String, MessageDescriptor)>,
+    pubsub_data: Arc<Mutex<PubsubData>>,
+    topic: String,
 }
 
 impl UntypedSubscriber {
@@ -71,16 +99,21 @@ impl UntypedSubscriber {
         session: &Session,
         topic: S,
         file_descriptors_bytes: &[Vec<u8>],
+        pubsub_data: Arc<Mutex<PubsubData>>,
     ) -> Result<Self> {
+        let topic = topic.as_ref();
         let subscriber = session
-            .declare_subscriber(topic.as_ref())
+            .declare_subscriber(format!("robotica/pubsub/{topic}"))
             .with(flume::bounded(100))
             .await?;
         let file_descriptor_pools = parse_file_descriptors(file_descriptors_bytes)?;
+        pubsub_data.lock().await.subscribers.insert(topic.into());
         Ok(UntypedSubscriber {
             subscriber,
             file_descriptor_pools,
             active_message_descriptor: None,
+            pubsub_data,
+            topic: topic.into(),
         })
     }
 
@@ -143,6 +176,23 @@ impl UntypedSubscriber {
             .as_ref()
             .expect("active message descriptor must be set here")
             .1)
+    }
+}
+
+impl Drop for UntypedSubscriber {
+    fn drop(&mut self) {
+        if !self
+            .pubsub_data
+            .blocking_lock()
+            .subscribers
+            .remove(&self.topic)
+        {
+            warn!(
+                msg = "subscriber_remove_issue",
+                topic = self.topic,
+                "We tried to remove subscriber from active list, but it was already gone. This is likely a bug",
+            );
+        }
     }
 }
 

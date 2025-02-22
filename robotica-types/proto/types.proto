@@ -12,3 +12,19 @@ message Header {
 message StringMessage {
   string data = 1;
 }
+
+message SubscriberList {
+  repeated SubscriberInfo subscribers = 1;
+}
+
+message PublisherList {
+  repeated PublisherInfo publishers = 1;
+}
+
+message SubscriberInfo {
+  string name = 1;
+}
+
+message PublisherInfo {
+  string name = 1;
+}

@@ -1,11 +1,12 @@
 use super::TopicCommands;
 use robotica::Node;
+use std::collections::BTreeSet;
 use std::time::Duration;
 
 #[allow(clippy::module_name_repetitions)]
 pub async fn topic_cmd(node: Node, command: TopicCommands) -> anyhow::Result<()> {
     match command {
-        TopicCommands::List => topic_list().await,
+        TopicCommands::List => topic_list(node).await,
         TopicCommands::Sub { topic_name } => topic_sub(node, topic_name).await,
         TopicCommands::Pub {
             topic_name,
@@ -28,8 +29,23 @@ pub async fn topic_cmd(node: Node, command: TopicCommands) -> anyhow::Result<()>
 }
 
 #[allow(clippy::unused_async)]
-async fn topic_list() -> anyhow::Result<()> {
-    unimplemented!();
+async fn topic_list(node: Node) -> anyhow::Result<()> {
+    let mut topics = BTreeSet::new();
+    let nodes = node.list_nodes().await?;
+    for node_name in nodes {
+        for topic in node.list_nodes_subscribers(&node_name).await? {
+            topics.insert(topic.name);
+        }
+        for topic in node.list_nodes_publishers(&node_name).await? {
+            topics.insert(topic.name);
+        }
+    }
+
+    for topic in topics {
+        println!("{topic}");
+    }
+
+    Ok(())
 }
 
 async fn topic_sub(node: Node, name: String) -> anyhow::Result<()> {
