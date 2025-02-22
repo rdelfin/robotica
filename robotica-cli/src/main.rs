@@ -2,6 +2,7 @@ use clap::{Parser, Subcommand};
 use robotica::{log::LevelFilter, LogConfig, Node};
 use std::path::PathBuf;
 
+mod node;
 mod topic;
 
 #[derive(Parser, Debug)]
@@ -19,6 +20,16 @@ enum Commands {
         #[command(subcommand)]
         command: TopicCommands,
     },
+    Node {
+        #[command(subcommand)]
+        command: NodeCommands,
+    },
+}
+
+/// A collection of all commands relating to listing, printing, and managing nodes.
+#[derive(Subcommand, Debug)]
+enum NodeCommands {
+    List,
 }
 
 /// A collection of all commands relating to listing, printing, and managing topics.
@@ -65,5 +76,6 @@ async fn main() -> anyhow::Result<()> {
 
     match args.command {
         Commands::Topic { command } => topic::topic_cmd(node, command).await,
+        Commands::Node { command } => node::node_cmd(node, command).await,
     }
 }

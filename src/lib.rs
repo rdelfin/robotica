@@ -1,6 +1,7 @@
 use log::LevelFilter;
 use simple_logger::SimpleLogger;
 use tracing::info;
+use zenoh::query::ConsolidationMode;
 use zenoh::Session;
 
 pub use log;
@@ -37,11 +38,30 @@ impl Node {
     ///
     /// # Errors
     /// This function will return an error if the zenoh session cannot be created.
+    #[allow(clippy::missing_panics_doc)]
     pub async fn new<S: AsRef<str>>(node_name: S) -> Result<Node> {
         let zenoh_session = zenoh::open(zenoh::Config::default()).await?;
-        info!(msg = "node_created", name = node_name.as_ref());
+        let queryable = zenoh_session
+            .declare_queryable("robotica/node_names")
+            .with(flume::unbounded())
+            .await?;
+        let node_name = node_name.as_ref().to_string();
+        let node_name_clone = node_name.clone();
+        let _jh = tokio::spawn(async move {
+            if let Err(e) = node_name_queryable(queryable, node_name_clone).await {
+                if !matches!(e, Error::Flume(flume::RecvError::Disconnected)) {
+                    tracing::error!(
+                        msg = "error_node_queryable",
+                        error = ?e,
+                        "Error in node queryable, this is a bug in robotica",
+                    );
+                    panic!("Error in node queryable");
+                }
+            }
+        });
+        info!(msg = "node_created", name = node_name);
         Ok(Node {
-            node_name: node_name.as_ref().into(),
+            node_name,
             zenoh_session,
             // We default to use our own file descriptor
             file_descriptor: vec![robotica_types::DESCRIPTOR_SET_BYTES.to_vec()],
@@ -151,6 +171,48 @@ impl Node {
         );
         Ok(publisher)
     }
+
+    /// Provides a full list of all nodes currently on the robotica network.
+    ///
+    /// # Errors
+    /// As this uses the zenoh query function, any error returned to us by zenoh will be passed on
+    /// to you.
+    pub async fn list_nodes(&self) -> Result<Vec<String>> {
+        let get = self
+            .zenoh_session
+            .get("robotica/node_names")
+            .consolidation(ConsolidationMode::None)
+            // .timeout(Duration::from_millis(500))
+            .with(flume::unbounded())
+            .await?;
+        let mut result = Vec::new();
+        loop {
+            let msg = get.recv_async().await;
+            match msg {
+                Ok(msg) => {
+                    let bytes = msg.result()?.payload().to_bytes();
+                    let node_name = String::from_utf8_lossy(bytes.as_ref());
+                    result.push(node_name.into());
+                }
+                Err(e) => {
+                    println!("Exiting with error: {e}");
+                    break;
+                }
+            }
+        }
+
+        Ok(result)
+    }
+}
+
+async fn node_name_queryable(
+    queryable: zenoh::query::Queryable<flume::Receiver<zenoh::query::Query>>,
+    node_name: String,
+) -> Result {
+    loop {
+        let query = queryable.recv_async().await?;
+        query.reply("robotica/node_names", &node_name).await?;
+    }
 }
 
 /// Configuration for the logging setup
@@ -218,6 +280,9 @@ pub enum Error {
     /// Error propagated from flume, usually at queue creation
     #[error("flume error: {0}")]
     Flume(#[from] flume::RecvError),
+    /// Errors returned by Zenoh query replies
+    #[error("zenoh query error: {0}")]
+    ZenohQueryReply(#[from] zenoh::query::ReplyError),
     /// This error is returned if, when receving a message from a subscriber, the type of the
     /// message does not match the type of the subscriber
     #[error("subscriber expected message of type \"{expected}\", but received message of type \"{actual}\"")]
@@ -241,6 +306,12 @@ pub enum Error {
     /// Error when parsing the JSON provided in the dynamic publisher.
     #[error("error with logging: {0}")]
     LogSetupError(#[from] log::SetLoggerError),
+}
+
+impl From<&zenoh::query::ReplyError> for Error {
+    fn from(e: &zenoh::query::ReplyError) -> Error {
+        Error::ZenohQueryReply(e.clone())
+    }
 }
 
 /// A type alias for results returned by functions in this library.
