@@ -9,6 +9,6 @@ prost-reflect = { version = "0.14", features = ["derive", "serde", "text-format"
 prost-types = "0.13"
 
 [build-dependencies]
-anyhow = "1.0.86"
-prost-build = "0.12.6"
-prost-reflect-build = "0.13.0"
+anyhow = "1"
+prost-build = "0.13"
+prost-reflect-build = "0.14"

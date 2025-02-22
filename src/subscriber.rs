@@ -7,22 +7,25 @@ use prost_reflect::{DescriptorPool, DynamicMessage, MessageDescriptor};
 use robotica_types::Header;
 use std::marker::PhantomData;
 use tracing::instrument;
-use zenoh::{prelude::r#async::*, subscriber::FlumeSubscriber};
+use zenoh::{sample::Sample, Session};
 
 /// This struct represents a subscriber to a topic. This guarantees to return messages of type M.
 /// Note that you cannot create this struct directly, but must instead fetch one from a
 /// [`Node`](crate::Node).
-pub struct Subscriber<'a, M: prost::Message + prost::Name + Default> {
-    subscriber: FlumeSubscriber<'a>,
+pub struct Subscriber<M: prost::Message + prost::Name + Default> {
+    subscriber: zenoh::pubsub::Subscriber<flume::Receiver<Sample>>,
     _phantom: PhantomData<M>,
 }
 
-impl<'a, M: prost::Message + prost::Name + Default> Subscriber<'a, M> {
+impl<M: prost::Message + prost::Name + Default> Subscriber<M> {
     pub(crate) async fn new_from_session<S: AsRef<str>>(
-        session: &'a Session,
+        session: &Session,
         topic: S,
     ) -> Result<Self> {
-        let subscriber = session.declare_subscriber(topic.as_ref()).res().await?;
+        let subscriber = session
+            .declare_subscriber(topic.as_ref())
+            .with(flume::bounded(100))
+            .await?;
         Ok(Subscriber {
             subscriber,
             _phantom: PhantomData,
@@ -39,7 +42,7 @@ impl<'a, M: prost::Message + prost::Name + Default> Subscriber<'a, M> {
     #[instrument(level = "trace", skip_all)]
     pub async fn recv(&self) -> Result<ReceivedMessage<M>> {
         let sample = self.subscriber.recv_async().await?;
-        let bytes = sample.value.payload.contiguous();
+        let bytes = sample.payload().to_bytes();
         let mut byte_ref = bytes.as_ref();
         let header = Header::decode_length_delimited(&mut byte_ref)?;
         if header.type_url == M::type_url() {
@@ -57,19 +60,22 @@ impl<'a, M: prost::Message + prost::Name + Default> Subscriber<'a, M> {
 }
 
 #[allow(clippy::module_name_repetitions)]
-pub struct UntypedSubscriber<'a> {
-    subscriber: FlumeSubscriber<'a>,
+pub struct UntypedSubscriber {
+    subscriber: zenoh::pubsub::Subscriber<flume::Receiver<Sample>>,
     file_descriptor_pools: Vec<DescriptorPool>,
     active_message_descriptor: Option<(String, MessageDescriptor)>,
 }
 
-impl<'a> UntypedSubscriber<'a> {
+impl UntypedSubscriber {
     pub(crate) async fn new_from_session<S: AsRef<str>>(
-        session: &'a Session,
+        session: &Session,
         topic: S,
         file_descriptors_bytes: &[Vec<u8>],
     ) -> Result<Self> {
-        let subscriber = session.declare_subscriber(topic.as_ref()).res().await?;
+        let subscriber = session
+            .declare_subscriber(topic.as_ref())
+            .with(flume::bounded(100))
+            .await?;
         let file_descriptor_pools = parse_file_descriptors(file_descriptors_bytes)?;
         Ok(UntypedSubscriber {
             subscriber,
@@ -96,7 +102,7 @@ impl<'a> UntypedSubscriber<'a> {
     pub async fn recv(&mut self) -> Result<ReceivedMessage<DynamicMessage>> {
         // Fetch message bytes and decode the header
         let sample = self.subscriber.recv_async().await?;
-        let bytes = sample.value.payload.contiguous();
+        let bytes = sample.payload().to_bytes();
         let mut byte_ref = bytes.as_ref();
         let header = Header::decode_length_delimited(&mut byte_ref)?;
 

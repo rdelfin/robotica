@@ -1,7 +1,7 @@
 use log::LevelFilter;
 use simple_logger::SimpleLogger;
 use tracing::info;
-use zenoh::prelude::r#async::*;
+use zenoh::Session;
 
 pub use log;
 pub use tracing;
@@ -38,7 +38,7 @@ impl Node {
     /// # Errors
     /// This function will return an error if the zenoh session cannot be created.
     pub async fn new<S: AsRef<str>>(node_name: S) -> Result<Node> {
-        let zenoh_session = zenoh::open(config::default()).res().await?;
+        let zenoh_session = zenoh::open(zenoh::Config::default()).await?;
         info!(msg = "node_created", name = node_name.as_ref());
         Ok(Node {
             node_name: node_name.as_ref().into(),
@@ -64,7 +64,7 @@ impl Node {
     pub async fn subscribe<M: prost::Message + prost::Name + Default, S: AsRef<str>>(
         &self,
         topic: S,
-    ) -> Result<Subscriber<'_, M>> {
+    ) -> Result<Subscriber<M>> {
         let topic = topic.as_ref();
         let sub = Subscriber::new_from_session(&self.zenoh_session, topic).await?;
         info!(
@@ -84,10 +84,7 @@ impl Node {
     /// # Errors
     /// This function will return an error if the subscriber cannot be created. This usually means
     /// an error from zenoh.
-    pub async fn subscribe_untyped<S: AsRef<str>>(
-        &self,
-        topic: S,
-    ) -> Result<UntypedSubscriber<'_>> {
+    pub async fn subscribe_untyped<S: AsRef<str>>(&self, topic: S) -> Result<UntypedSubscriber> {
         let topic = topic.as_ref();
         let sub =
             UntypedSubscriber::new_from_session(&self.zenoh_session, topic, &self.file_descriptor)

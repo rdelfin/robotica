@@ -9,13 +9,13 @@ use robotica_types::Header;
 use serde_json::Value;
 use std::{marker::PhantomData, time::SystemTime};
 use tracing::instrument;
-use zenoh::prelude::r#async::*;
+use zenoh::Session;
 
 /// This struct represents a publisher to a topic. This will require you send messages of type M.
 /// Note that you cannot create this struct directly, but must instead fetch one from a
 /// [`Node`](crate::Node).
 pub struct Publisher<'a, M: prost::Message + prost::Name> {
-    publisher: zenoh::publication::Publisher<'a>,
+    publisher: zenoh::pubsub::Publisher<'a>,
     _phantom: PhantomData<M>,
 }
 
@@ -26,7 +26,6 @@ impl<'a, M: prost::Message + prost::Name> Publisher<'a, M> {
     ) -> Result<Self> {
         let publisher = session
             .declare_publisher(topic.as_ref().to_string())
-            .res()
             .await?;
         Ok(Publisher {
             publisher,
@@ -48,7 +47,7 @@ impl<'a, M: prost::Message + prost::Name> Publisher<'a, M> {
         };
         let mut buf = header.encode_length_delimited_to_vec();
         buf.extend_from_slice(&message.encode_length_delimited_to_vec());
-        self.publisher.put(buf).res().await?;
+        self.publisher.put(buf).await?;
         Ok(())
     }
 }
@@ -58,7 +57,7 @@ impl<'a, M: prost::Message + prost::Name> Publisher<'a, M> {
 /// cannot create this struct directly, but must instead fetch one from a [`Node`](crate::Node).
 #[allow(clippy::module_name_repetitions)]
 pub struct UntypedPublisher<'a> {
-    publisher: zenoh::publication::Publisher<'a>,
+    publisher: zenoh::pubsub::Publisher<'a>,
     message_descriptor: MessageDescriptor,
     type_url: String,
 }
@@ -75,7 +74,6 @@ impl<'a> UntypedPublisher<'a> {
         let message_descriptor = search_file_descriptors(&file_descriptor_pools, type_url)?;
         let publisher = session
             .declare_publisher(topic.as_ref().to_string())
-            .res()
             .await?;
         Ok(UntypedPublisher {
             publisher,
@@ -105,7 +103,7 @@ impl<'a> UntypedPublisher<'a> {
         };
         let mut buf = header.encode_length_delimited_to_vec();
         buf.extend_from_slice(&dyn_message.encode_length_delimited_to_vec());
-        self.publisher.put(buf).res().await?;
+        self.publisher.put(buf).await?;
         Ok(())
     }
 }
