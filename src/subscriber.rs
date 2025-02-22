@@ -23,7 +23,7 @@ impl<M: prost::Message + prost::Name + Default> Subscriber<M> {
         topic: S,
     ) -> Result<Self> {
         let subscriber = session
-            .declare_subscriber(topic.as_ref())
+            .declare_subscriber(format!("robotica/pubsub/{}", topic.as_ref()))
             .with(flume::bounded(100))
             .await?;
         Ok(Subscriber {

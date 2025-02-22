@@ -25,7 +25,7 @@ impl<'a, M: prost::Message + prost::Name> Publisher<'a, M> {
         topic: S,
     ) -> Result<Self> {
         let publisher = session
-            .declare_publisher(topic.as_ref().to_string())
+            .declare_publisher(format!("robotica/pubsub/{}", topic.as_ref()))
             .await?;
         Ok(Publisher {
             publisher,
