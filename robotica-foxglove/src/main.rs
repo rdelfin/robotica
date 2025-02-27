@@ -2,9 +2,8 @@ use anyhow::Context;
 use clap::Parser;
 use foxglove::{Channel, Schema, WebSocketServer};
 use futures::stream::{FuturesUnordered, StreamExt};
-use prost::Message;
 use prost_reflect::DescriptorPool;
-use robotica::{Node, UntypedSubscriber};
+use robotica::{LogConfig, Node, RawSubscriber};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -40,7 +39,7 @@ async fn main() -> anyhow::Result<()> {
     let descriptor_pool_data = pool.encode_to_vec();
 
     let server = WebSocketServer::new();
-    let node = Node::new("foxglove-server").await?;
+    let node = Node::new_with_logging("foxglove-server", LogConfig::new()).await?;
 
     let channels = config
         .topics
@@ -65,7 +64,7 @@ async fn main() -> anyhow::Result<()> {
         .collect::<anyhow::Result<HashMap<_, _>>>()?;
     let mut topic_futures = Vec::new();
     for (topic, channel) in channels {
-        let subscriber = node.subscribe_untyped(topic).await?;
+        let subscriber = node.subscribe_raw(topic).await?;
         topic_futures.push(tokio::spawn(async move {
             topic_update(channel, subscriber).await.unwrap()
         }));
@@ -84,13 +83,10 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn topic_update(
-    channel: Arc<Channel>,
-    mut subscriber: UntypedSubscriber,
-) -> anyhow::Result<()> {
+async fn topic_update(channel: Arc<Channel>, mut subscriber: RawSubscriber) -> anyhow::Result<()> {
     loop {
         let data = subscriber.recv().await?;
-        channel.log(&data.message.encode_to_vec());
+        channel.log(&data.message);
     }
 }
 

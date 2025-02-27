@@ -17,7 +17,7 @@ mod publisher;
 mod subscriber;
 
 pub use crate::publisher::{Publisher, UntypedPublisher};
-pub use crate::subscriber::{Subscriber, UntypedSubscriber};
+pub use crate::subscriber::{RawSubscriber, Subscriber, UntypedSubscriber};
 
 /// This struct represents a node in the robotica system. This is the basic unit of interaction.
 /// This is the basic unit of interaction with robotica. Use this to create channels (publishers,
@@ -115,6 +115,30 @@ impl Node {
             self.pubsub_data.clone(),
         )
         .await?;
+        info!(
+            msg = "subscriber_created",
+            name = self.node_name,
+            topic = topic,
+            type_url = "unknown",
+        );
+        Ok(sub)
+    }
+
+    /// This function creates a raw subscriber for a given topic. The topic is a string that
+    /// uniquely identifies the data channel across an entire system. The subscriber will not
+    /// attempt to do any decoding of the messages, and will instead simple return the raw bytes
+    /// that we received from the channel before protobuf decoding. We will parse the header and
+    /// length of the message to make sure you only get the bytes necessary for decoding the
+    /// protobuf and nothing else.
+    ///
+    /// # Errors
+    /// This function will return an error if the subscriber cannot be created. This usually means
+    /// an error from zenoh.
+    pub async fn subscribe_raw<S: AsRef<str>>(&self, topic: S) -> Result<RawSubscriber> {
+        let topic = topic.as_ref();
+        let sub =
+            RawSubscriber::new_from_session(&self.zenoh_session, topic, self.pubsub_data.clone())
+                .await?;
         info!(
             msg = "subscriber_created",
             name = self.node_name,

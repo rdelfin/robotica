@@ -196,6 +196,82 @@ impl Drop for UntypedSubscriber {
     }
 }
 
+#[allow(clippy::module_name_repetitions)]
+pub struct RawSubscriber {
+    subscriber: zenoh::pubsub::Subscriber<flume::Receiver<Sample>>,
+    pubsub_data: Arc<Mutex<PubsubData>>,
+    topic: String,
+}
+
+impl RawSubscriber {
+    pub(crate) async fn new_from_session<S: AsRef<str>>(
+        session: &Session,
+        topic: S,
+        pubsub_data: Arc<Mutex<PubsubData>>,
+    ) -> Result<Self> {
+        let topic = topic.as_ref();
+        let subscriber = session
+            .declare_subscriber(format!("robotica/pubsub/{topic}"))
+            .with(flume::bounded(100))
+            .await?;
+        pubsub_data.lock().await.subscribers.insert(topic.into());
+        Ok(RawSubscriber {
+            subscriber,
+            pubsub_data,
+            topic: topic.into(),
+        })
+    }
+
+    /// This function blocks until a message is received on the topic we're subscribed to, per the
+    /// `QoS` requirements of this subscriber. Note the return type is a simple `Vec<u8>`, which
+    /// contains the raw, unencoded byte data sent over the channel, a plain protobuf that covers
+    /// all the the bytes returned. If you wish to decode it, you should do that manually using the
+    /// appropriate file descriptor data and a crate like `prost_reflect`.
+    ///
+    /// # Errors
+    /// This function will return an error if the message cannot be received for any reason. In
+    /// practice, this means either an error was returned by zenoh, or we failed to decode the
+    /// header data. Note that we make no attempt at verifying that the bytes we receive are a
+    /// valid protobuf message, we only check the length and nothing else.
+    ///
+    /// # Panics
+    /// This function will only panic if a u64 cannot be converted to a usize on your system.
+    #[instrument(level = "trace", skip_all)]
+    pub async fn recv(&mut self) -> Result<ReceivedMessage<Vec<u8>>> {
+        // Fetch message bytes and decode the header
+        let sample = self.subscriber.recv_async().await?;
+        let bytes = sample.payload().to_bytes();
+        let mut byte_ref = bytes.as_ref();
+        let header = Header::decode_length_delimited(&mut byte_ref)?;
+
+        // Since messages are length-delimited, we need to read a single varint first
+        let len = usize::try_from(prost::encoding::decode_varint(&mut byte_ref)?)
+            .expect("u64 should always fit in usize");
+
+        Ok(ReceivedMessage {
+            header,
+            message: byte_ref[..len].into(),
+        })
+    }
+}
+
+impl Drop for RawSubscriber {
+    fn drop(&mut self) {
+        if !self
+            .pubsub_data
+            .blocking_lock()
+            .subscribers
+            .remove(&self.topic)
+        {
+            warn!(
+                msg = "subscriber_remove_issue",
+                topic = self.topic,
+                "We tried to remove subscriber from active list, but it was already gone. This is likely a bug",
+            );
+        }
+    }
+}
+
 pub struct ReceivedMessage<M> {
     pub header: Header,
     pub message: M,
