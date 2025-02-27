@@ -1,0 +1,6 @@
+file_descriptor_sets = [
+  "file_descriptor_set.proto",
+]
+
+[topics.test_topic]
+type_url = "type.googleapis.com/robotica.StringMessage"
