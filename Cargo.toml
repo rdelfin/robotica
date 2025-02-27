@@ -27,5 +27,6 @@ tokio = "1.43"
 [workspace]
 members = [
     "robotica-types",
-    "robotica-cli"
+    "robotica-cli",
+    "robotica-foxglove",
 ]

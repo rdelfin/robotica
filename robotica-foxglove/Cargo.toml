@@ -1,0 +1,12 @@
+[package]
+name = "robotica-foxglove"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.96"
+foxglove = "0.2.1"
+robotica = { version = "0.1", path = ".." }
+serde = { version = "1.0.218", features = ["derive"] }
+tokio = "1.43"
+toml = "0.8.20"
