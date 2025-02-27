@@ -38,7 +38,7 @@ async fn main() -> anyhow::Result<()> {
     }
     let descriptor_pool_data = pool.encode_to_vec();
 
-    let server = WebSocketServer::new();
+    let server = WebSocketServer::new().bind(config.server.address.to_string(), config.server.port);
     let node = Node::new_with_logging("foxglove-server", LogConfig::new()).await?;
 
     let channels = config
