@@ -5,7 +5,7 @@ use std::path::PathBuf;
 #[derive(Debug, Clone, Deserialize)]
 pub struct Config {
     pub topics: HashMap<String, TopicConfig>,
-    pub file_desriptor_sets: Vec<PathBuf>,
+    pub file_descriptor_sets: Vec<PathBuf>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

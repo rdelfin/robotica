@@ -1,5 +1,5 @@
 file_descriptor_sets = [
-  "file_descriptor_set.proto",
+  "file_descriptor_set.bin",
 ]
 
 [topics.test_topic]
