@@ -1,0 +1,22 @@
+load("@crates//:defs.bzl", "aliases", "all_crate_deps")
+load("@rules_rs//rs:rust_library.bzl", "rust_library")
+load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@rules_rust//extensions/prost:defs.bzl", "rust_prost_library")
+
+proto_library(
+    name = "robotica-types-proto",
+    srcs = ["proto/types.proto"],
+    deps = ["@protobuf//:timestamp_proto"],
+)
+
+rust_prost_library(
+    name = "robotica-types",
+    proto = ":robotica-types-proto",
+)
+
+# rust_library(
+#     name = "robotica-types",
+#     srcs = ["src/lib.rs"],
+#     aliases = aliases(),
+#     deps = all_crate_deps(normal = True) + [":robotica-types-prost"],
+# )
