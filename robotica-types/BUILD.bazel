@@ -1,22 +1,35 @@
 load("@crates//:defs.bzl", "aliases", "all_crate_deps")
 load("@rules_rs//rs:rust_library.bzl", "rust_library")
-load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@protobuf//bazel:proto_library.bzl", "proto_library")
+load("@protobuf//bazel:proto_descriptor_set.bzl", "proto_descriptor_set")
 load("@rules_rust//extensions/prost:defs.bzl", "rust_prost_library")
 
+package(default_visibility = ["//visibility:public"])
+
 proto_library(
-    name = "robotica-types-proto",
+    name = "robotica_types_proto",
     srcs = ["proto/types.proto"],
     deps = ["@protobuf//:timestamp_proto"],
 )
 
-rust_prost_library(
-    name = "robotica-types",
-    proto = ":robotica-types-proto",
+proto_descriptor_set(
+    name = "robotica_types_descriptor_set",
+    deps = [":robotica_types_proto"],
 )
 
-# rust_library(
-#     name = "robotica-types",
-#     srcs = ["src/lib.rs"],
-#     aliases = aliases(),
-#     deps = all_crate_deps(normal = True) + [":robotica-types-prost"],
-# )
+rust_prost_library(
+    name = "robotica_types_prost",
+    proto = ":robotica_types_proto",
+)
+
+rust_library(
+    name = "robotica-types",
+    srcs = ["src/lib.rs"],
+    rustc_flags = ["--cfg=bazel_build"],
+    compile_data = [":robotica_types_descriptor_set"],
+    rustc_env = {
+        "DESCRIPTOR_SET_PATH": "$(execpath :robotica_types_descriptor_set)",
+    },
+    aliases = aliases(),
+    deps = [":robotica_types_prost"],
+)
