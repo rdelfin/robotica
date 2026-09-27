@@ -23,7 +23,7 @@ pub use crate::subscriber::{RawSubscriber, Subscriber, UntypedSubscriber};
 /// This is the basic unit of interaction with robotica. Use this to create channels (publishers,
 /// subscribers, etc.), interact with the environment, and generally setup your application.
 pub struct Node {
-    node_name: String,
+    name: String,
     zenoh_session: Session,
     pubsub_data: Arc<Mutex<PubsubData>>,
     file_descriptor: Vec<Vec<u8>>,
@@ -55,12 +55,12 @@ impl Node {
         let zenoh_session = zenoh::open(zenoh::Config::default()).await?;
         let pubsub_data: Arc<Mutex<PubsubData>> = Arc::default();
 
-        let node_name = node_name.as_ref().to_string();
-        start_queriables(&zenoh_session, &node_name, pubsub_data.clone()).await?;
+        let name = node_name.as_ref().to_string();
+        start_queriables(&zenoh_session, &name, pubsub_data.clone()).await?;
 
-        info!(msg = "node_created", name = node_name);
+        info!(msg = "node_created", name);
         Ok(Node {
-            node_name,
+            name,
             zenoh_session,
             pubsub_data,
             // We default to use our own file descriptor
@@ -91,7 +91,7 @@ impl Node {
                 .await?;
         info!(
             msg = "subscriber_created",
-            name = self.node_name,
+            name = self.name,
             topic = topic,
             type_url = M::type_url(),
         );
@@ -117,7 +117,7 @@ impl Node {
         .await?;
         info!(
             msg = "subscriber_created",
-            name = self.node_name,
+            name = self.name,
             topic = topic,
             type_url = "unknown",
         );
@@ -141,7 +141,7 @@ impl Node {
                 .await?;
         info!(
             msg = "subscriber_created",
-            name = self.node_name,
+            name = self.name,
             topic = topic,
             type_url = "unknown",
         );
@@ -165,7 +165,7 @@ impl Node {
                 .await?;
         info!(
             msg = "publisher_created",
-            name = self.node_name,
+            name = self.name,
             topic = topic,
             type_url = M::type_url(),
         );
@@ -198,7 +198,7 @@ impl Node {
         .await?;
         info!(
             msg = "publisher_created",
-            name = self.node_name,
+            name = self.name,
             topic = topic,
             type_url = type_url,
         );
@@ -394,6 +394,7 @@ async fn publishers_queryable(
 }
 
 /// Configuration for the logging setup
+#[expect(clippy::struct_field_names)]
 pub struct LogConfig {
     default_level: LevelFilter,
     zenoh_level: LevelFilter,
