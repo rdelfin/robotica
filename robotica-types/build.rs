@@ -1,4 +1,6 @@
 fn main() -> anyhow::Result<()> {
+    println!("cargo::rustc-check-cfg=cfg(bazel_build)");
+
     let mut config = prost_build::Config::new();
     config
         .enable_type_names()
