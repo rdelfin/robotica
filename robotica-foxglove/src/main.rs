@@ -66,13 +66,13 @@ async fn main() -> anyhow::Result<()> {
     for (topic, channel) in channels {
         let subscriber = node.subscribe_raw(topic).await?;
         topic_futures.push(tokio::spawn(async move {
-            topic_update(channel, subscriber).await.unwrap()
+            topic_update(channel, subscriber).await.unwrap();
         }));
     }
 
     let handle = server.start().await?;
 
-    let topic_futures = FuturesUnordered::from_iter(topic_futures.into_iter());
+    let topic_futures = topic_futures.into_iter().collect::<FuturesUnordered<_>>();
     topic_futures
         .collect::<Vec<_>>()
         .await

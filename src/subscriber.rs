@@ -14,6 +14,7 @@ use zenoh::{sample::Sample, Session};
 /// This struct represents a subscriber to a topic. This guarantees to return messages of type M.
 /// Note that you cannot create this struct directly, but must instead fetch one from a
 /// [`Node`](crate::Node).
+#[expect(clippy::struct_field_names)]
 pub struct Subscriber<M: prost::Message + prost::Name + Default> {
     subscriber: zenoh::pubsub::Subscriber<flume::Receiver<Sample>>,
     pubsub_data: Arc<Mutex<PubsubData>>,

@@ -16,6 +16,7 @@ use zenoh::Session;
 /// This struct represents a publisher to a topic. This will require you send messages of type M.
 /// Note that you cannot create this struct directly, but must instead fetch one from a
 /// [`Node`](crate::Node).
+#[expect(clippy::struct_field_names)]
 pub struct Publisher<'a, M: prost::Message + prost::Name> {
     publisher: zenoh::pubsub::Publisher<'a>,
     pubsub_data: Arc<Mutex<PubsubData>>,
