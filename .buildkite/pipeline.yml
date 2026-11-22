@@ -1,3 +1,4 @@
+image: ghcr.io/rdelfin/robotica-ci:latest
 steps:
   - label: ":python: Compute the pipeline with Python"
     commands:
