@@ -1,6 +1,6 @@
 use crate::{
-    proto::{parse_file_descriptors, search_file_descriptors},
     PubsubData, Result,
+    proto::{parse_file_descriptors, search_file_descriptors},
 };
 use prost::Message;
 use prost_reflect::{DynamicMessage, MessageDescriptor};

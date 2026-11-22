@@ -6,8 +6,8 @@ use std::collections::HashSet;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tracing::info;
-use zenoh::query::ConsolidationMode;
 use zenoh::Session;
+use zenoh::query::ConsolidationMode;
 
 pub use log;
 pub use tracing;
@@ -464,7 +464,9 @@ pub enum Error {
     ZenohQueryReply(#[from] zenoh::query::ReplyError),
     /// This error is returned if, when receving a message from a subscriber, the type of the
     /// message does not match the type of the subscriber
-    #[error("subscriber expected message of type \"{expected}\", but received message of type \"{actual}\"")]
+    #[error(
+        "subscriber expected message of type \"{expected}\", but received message of type \"{actual}\""
+    )]
     MismatchedSubscriberType { expected: String, actual: String },
     /// This error is returned if we fail to decode a protobuf when receiving a message on a
     /// subscriber. This usually means the data is invalid in some way, be it by corruption or for
