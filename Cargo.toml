@@ -19,7 +19,7 @@ tokio = "1.49"
 [package]
 name = "robotica"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 bytes = "1.11"
