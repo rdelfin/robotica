@@ -1,0 +1,19 @@
+load("@rules_rust//extensions/prost:defs.bzl", "rust_prost_toolchain")
+
+package(default_visibility = ["//visibility:public"])
+
+rust_prost_toolchain(
+    name = "prost_toolchain_impl",
+    compile_well_known_types = False,
+    prost_plugin = "@rules_rs//rs/private/prost:protoc-gen-prost__protoc-gen-prost",
+    prost_runtime = "@crates//prost",
+    prost_types = "@crates//prost-types",
+    tags = ["manual"],
+    tonic_plugin_flag = "",
+)
+
+toolchain(
+    name = "prost_toolchain",
+    toolchain = ":prost_toolchain_impl",
+    toolchain_type = "@rules_rust//extensions/prost:toolchain_type",
+)

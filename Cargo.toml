@@ -1,3 +1,21 @@
+[workspace]
+members = [
+    "robotica-types",
+    "robotica-cli",
+    "robotica-foxglove",
+]
+
+[workspace.dependencies]
+anyhow = "1"
+prost = "0.14"
+prost-build = "0.14"
+prost-reflect = "0.16"
+prost-reflect-build = "0.16"
+prost-types = "0.14"
+thiserror = "1"
+log = "0.4"
+tokio = "1.49"
+
 [package]
 name = "robotica"
 version = "0.1.0"
@@ -23,21 +41,3 @@ tokio = { workspace = true }
 anyhow = { workspace = true }
 chrono = "0.4"
 tokio = { workspace = true }
-
-[workspace]
-members = [
-    "robotica-types",
-    "robotica-cli",
-    "robotica-foxglove",
-]
-
-[workspace.dependencies]
-anyhow = "1"
-prost = "0.14"
-prost-build = "0.14"
-prost-reflect = "0.16"
-prost-reflect-build = "0.16"
-prost-types = "0.14"
-thiserror = "1"
-log = "0.4"
-tokio = "1.49"
