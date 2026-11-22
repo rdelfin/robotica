@@ -1,0 +1,17 @@
+load("@rules_rs//rs:rust_binary.bzl", "rust_binary")
+
+rust_binary(
+    name = "robotica-cli",
+    srcs = [
+        "src/main.rs",
+        "src/node.rs",
+        "src/topic.rs",
+    ],
+    deps = [
+        "@crates//anyhow",
+        "@crates//clap",
+        "@crates//serde_json",
+        "@crates//tokio",
+        "//:robotica",
+    ],
+)
