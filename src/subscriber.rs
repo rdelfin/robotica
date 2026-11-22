@@ -1,6 +1,6 @@
 use crate::{
-    proto::{parse_file_descriptors, search_file_descriptors},
     Error, PubsubData, Result,
+    proto::{parse_file_descriptors, search_file_descriptors},
 };
 use prost::Message;
 use prost_reflect::{DescriptorPool, DynamicMessage, MessageDescriptor};
@@ -9,7 +9,7 @@ use std::marker::PhantomData;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tracing::{instrument, warn};
-use zenoh::{sample::Sample, Session};
+use zenoh::{Session, sample::Sample};
 
 /// This struct represents a subscriber to a topic. This guarantees to return messages of type M.
 /// Note that you cannot create this struct directly, but must instead fetch one from a

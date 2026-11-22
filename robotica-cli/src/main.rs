@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand};
-use robotica::{log::LevelFilter, LogConfig, Node};
+use robotica::{LogConfig, Node, log::LevelFilter};
 use std::path::PathBuf;
 
 mod node;
