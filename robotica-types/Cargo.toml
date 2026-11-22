@@ -4,11 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-prost = "0.14"
-prost-reflect = { version = "0.16", features = ["derive", "serde", "text-format"] }
-prost-types = "0.14"
+prost = { workspace = true }
+prost-reflect = { workspace = true, features = ["derive", "serde", "text-format"] }
+prost-types = { workspace = true }
 
 [build-dependencies]
-anyhow = "1"
-prost-build = "0.14"
-prost-reflect-build = "0.16"
+anyhow = { workspace = true }
+prost-build = { workspace = true }
+prost-reflect-build = { workspace = true }
