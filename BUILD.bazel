@@ -1,4 +1,19 @@
+load("@crates//:defs.bzl", "aliases", "all_crate_deps")
+load("@rules_rs//rs:rust_library.bzl", "rust_library")
+
 exports_files([
     "Cargo.toml",
     "Cargo.lock",
 ])
+
+rust_library(
+    name = "robotica",
+    srcs = [
+        "src/lib.rs",
+        "src/proto.rs",
+        "src/publisher.rs",
+        "src/subscriber.rs",
+    ],
+    aliases = aliases(),
+    deps = all_crate_deps(normal = True),
+)
