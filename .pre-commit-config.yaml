@@ -1,11 +1,9 @@
 repos:
-# - repo: https://github.com/doublify/pre-commit-rust
-#   rev: v1.0
-#   hooks:
-#   - id: fmt
-#   - id: cargo-check
-#   - id: clippy
-#     args: ['--verbose', '--', '-D', 'warnings', '-D', 'clippy::all', '-D', 'clippy::pedantic']
+- repo: https://github.com/doublify/pre-commit-rust
+  rev: v1.0
+  hooks:
+  - id: clippy
+    args: ['--verbose', '--', '-D', 'warnings', '-D', 'clippy::all', '-D', 'clippy::pedantic']
 - repo: local
   hooks:
     - id: aspect_rules_lint

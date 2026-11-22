@@ -277,15 +277,15 @@ async fn start_queriables(
         .await?;
     let node_name_clone = node_name.to_string();
     tokio::spawn(async move {
-        if let Err(e) = node_name_queryable(queryable, node_name_clone).await {
-            if !matches!(e, Error::Flume(flume::RecvError::Disconnected)) {
-                tracing::error!(
-                    msg = "error_node_queryable",
-                    error = ?e,
-                    "Error in node queryable, this is a bug in robotica",
-                );
-                panic!("Error in node queryable");
-            }
+        if let Err(e) = node_name_queryable(queryable, node_name_clone).await
+            && !matches!(e, Error::Flume(flume::RecvError::Disconnected))
+        {
+            tracing::error!(
+                msg = "error_node_queryable",
+                error = ?e,
+                "Error in node queryable, this is a bug in robotica",
+            );
+            panic!("Error in node queryable");
         }
     });
 
@@ -297,15 +297,15 @@ async fn start_queriables(
     let node_name_clone = node_name.to_string();
     let pubsub_data_clone = pubsub_data.clone();
     tokio::spawn(async move {
-        if let Err(e) = subscribers_queryable(queryable, node_name_clone, pubsub_data_clone).await {
-            if !matches!(e, Error::Flume(flume::RecvError::Disconnected)) {
-                tracing::error!(
-                    msg = "error_node_queryable",
-                    error = ?e,
-                    "Error in node queryable, this is a bug in robotica",
-                );
-                panic!("Error in node queryable");
-            }
+        if let Err(e) = subscribers_queryable(queryable, node_name_clone, pubsub_data_clone).await
+            && !matches!(e, Error::Flume(flume::RecvError::Disconnected))
+        {
+            tracing::error!(
+                msg = "error_node_queryable",
+                error = ?e,
+                "Error in node queryable, this is a bug in robotica",
+            );
+            panic!("Error in node queryable");
         }
     });
 
@@ -316,15 +316,15 @@ async fn start_queriables(
         .await?;
     let node_name_clone = node_name.to_string();
     tokio::spawn(async move {
-        if let Err(e) = publishers_queryable(queryable, node_name_clone, pubsub_data).await {
-            if !matches!(e, Error::Flume(flume::RecvError::Disconnected)) {
-                tracing::error!(
-                    msg = "error_node_queryable",
-                    error = ?e,
-                    "Error in node queryable, this is a bug in robotica",
-                );
-                panic!("Error in node queryable");
-            }
+        if let Err(e) = publishers_queryable(queryable, node_name_clone, pubsub_data).await
+            && !matches!(e, Error::Flume(flume::RecvError::Disconnected))
+        {
+            tracing::error!(
+                msg = "error_node_queryable",
+                error = ?e,
+                "Error in node queryable, this is a bug in robotica",
+            );
+            panic!("Error in node queryable");
         }
     });
 
