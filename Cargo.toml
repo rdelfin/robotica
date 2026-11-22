@@ -12,6 +12,7 @@ prost-build = "0.14"
 prost-reflect = "0.16"
 prost-reflect-build = "0.16"
 prost-types = "0.14"
+serde_json = "1.0"
 thiserror = "1"
 log = "0.4"
 tokio = "1.49"
@@ -31,7 +32,7 @@ thiserror = { workspace = true }
 zenoh = "1.7"
 robotica-types = { version = "0.1", path = "robotica-types" }
 prost-reflect = { workspace = true, features = ["serde", "text-format"] }
-serde_json = "1.0"
+serde_json = { workspace = true }
 tracing = { version = "0.1", features = ["log-always"] }
 simple_logger = "5.1"
 log = { workspace = true }
