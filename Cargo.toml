@@ -7,11 +7,13 @@ members = [
 
 [workspace.dependencies]
 anyhow = "1"
+clap = "4.5"
 prost = "0.14"
 prost-build = "0.14"
 prost-reflect = "0.16"
 prost-reflect-build = "0.16"
 prost-types = "0.14"
+serde = "1.0"
 serde_json = "1.0"
 thiserror = "1"
 log = "0.4"
