@@ -1,0 +1,21 @@
+load("@rules_rs//rs:rust_binary.bzl", "rust_binary")
+
+rust_binary(
+    name = "robotica-foxglove",
+    srcs = [
+        "src/config.rs",
+        "src/main.rs",
+    ],
+    deps = [
+        "@crates//anyhow",
+        "@crates//clap",
+        "@crates//foxglove",
+        "@crates//futures",
+        "@crates//prost",
+        "@crates//prost-reflect",
+        "@crates//serde",
+        "@crates//tokio",
+        "@crates//toml",
+        "//:robotica",
+    ],
+)
