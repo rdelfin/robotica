@@ -1,5 +1,7 @@
 import json, os, subprocess
 
+CI_IMAGE = "ghcr.io/rdelfin/robotica-ci:latest"
+
 # Returns a Buildkite `command` step that builds, tests, and annotates a Bazel package.
 def get_package_step(package):
     return command_step(
@@ -9,7 +11,16 @@ def get_package_step(package):
             f"bazel test //{package}/...",
             f"bazel build //{package}/... --build_event_json_file=bazel-events.json",
         ],
-        [{ "bazel-annotate#v0.1.0": { "bep_file": f"bazel-events.json"} }],
+        [
+            {
+                "docker#v5.12.0": {
+                    "image": CI_IMAGE,
+                    "mount-buildkite-agent": True,
+                    "volumes": ["/var/lib/buildkite-agent/.cache/bazel:/root/.cache/bazel"],
+                }
+            },
+            { "bazel-annotate#v0.1.0": { "bep_file": f"bazel-events.json"} },
+        ],
     )
 
 # Returns a Buildkite `command` step (as a Python dictionary.

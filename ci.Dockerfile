@@ -4,7 +4,7 @@ ARG TARGETARCH
 ARG BAZELISK_VERSION=v1.30.0
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends build-essential ca-certificates curl git \
+    && apt-get install -y --no-install-recommends build-essential ca-certificates curl git python3 \
     && rm -rf /var/lib/apt/lists/*
 
 # TARGETARCH is "amd64" or "arm64", the same names Bazelisk uses in its releases.

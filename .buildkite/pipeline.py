@@ -8,7 +8,7 @@ changed_paths = run(["git", "diff-tree", "--name-only", "HEAD~1..HEAD"])
 changed_dirs = filter_dirs(changed_paths)
 
 # Query the Bazel workspace for a list of all packages (libraries, binaries, etc.).
-all_packages = run(["bazel", "query", "'/...'"])
+all_packages = run(["bazel", "query", "//..."])
 
 # Using both lists, figure out which packages need to be built.
 changed_packages = [p for p in changed_dirs if p in get_paths(all_packages)]
