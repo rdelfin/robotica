@@ -1,5 +1,7 @@
 steps:
   - label: ":bazel: Build"
+    secrets:
+      BUILD_BUDDY_SECRET: BUILD_BUDDY_KEY
     commands:
       - echo "common --remote_header=x-buildbuddy-api-key=$$BUILD_BUDDY_SECRET" > user.bazelrc
       - echo "common --build_metadata=ROLE=CI" >> user.bazelrc
