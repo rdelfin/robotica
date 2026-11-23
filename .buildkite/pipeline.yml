@@ -1,7 +1,7 @@
 steps:
   - label: ":python: Compute the pipeline with Python"
     commands:
-      - set -o pipefail; python3 .buildkite/pipeline.py | buildkite-agent pipeline upload
+      - set -euxo pipefail; python3 .buildkite/pipeline.py | buildkite-agent pipeline upload
     plugins:
       - docker-compose#v5.5.0:
           config: .buildkite/docker-compose.yml

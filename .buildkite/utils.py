@@ -1,4 +1,4 @@
-import json, os, subprocess
+import json, os, subprocess, sys
 
 CI_COMPOSE_PLUGIN = {
     "docker-compose#v5.5.0": {
@@ -14,8 +14,8 @@ def get_package_step(package):
         "bazel",
         f"Build and test //{package}/...",
         [
-            f"bazel test //{package}/...",
-            f"bazel build //{package}/... --build_event_json_file=bazel-events.json",
+            f"bazel test //{package}/... --test_output=errors --verbose_failures --curses=no --color=no",
+            f"bazel build //{package}/... --build_event_json_file=bazel-events.json --verbose_failures --curses=no --color=no",
         ],
         [
             CI_COMPOSE_PLUGIN,
@@ -32,7 +32,15 @@ def command_step(emoji, label, commands=[], plugins=[]):
 
 # Runs an OS command, returning stdout as a list of lines.
 def run(command):
-    return subprocess.run(command, capture_output=True, text=True, check=True).stdout.strip().splitlines()
+    print(f"+ {' '.join(command)}", file=sys.stderr)
+    result = subprocess.run(command, capture_output=True, text=True)
+    if result.stderr:
+        print(result.stderr, file=sys.stderr)
+    if result.returncode != 0:
+        print(f"Command failed with exit code {result.returncode}", file=sys.stderr)
+        print(f"stdout:\n{result.stdout}", file=sys.stderr)
+        sys.exit(result.returncode)
+    return result.stdout.strip().splitlines()
 
 # Converts a list of file paths into a list of directories, omitting those that aren't.
 def filter_dirs(paths):
