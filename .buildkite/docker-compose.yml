@@ -1,0 +1,9 @@
+services:
+  ci:
+    build:
+      context: ..
+      dockerfile: ci.Dockerfile
+    working_dir: /workdir
+    volumes:
+      - ..:/workdir
+      - /var/lib/buildkite-agent/.cache/bazel:/root/.cache/bazel

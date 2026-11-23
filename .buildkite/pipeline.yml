@@ -3,8 +3,7 @@ steps:
     commands:
       - set -o pipefail; python3 .buildkite/pipeline.py | buildkite-agent pipeline upload
     plugins:
-      - docker#v5.12.0:
-          image: ghcr.io/rdelfin/robotica-ci:latest
+      - docker-compose#v5.5.0:
+          config: .buildkite/docker-compose.yml
+          run: ci
           mount-buildkite-agent: true
-          volumes:
-            - /var/lib/buildkite-agent/.cache/bazel:/root/.cache/bazel

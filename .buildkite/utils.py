@@ -1,6 +1,12 @@
 import json, os, subprocess
 
-CI_IMAGE = "ghcr.io/rdelfin/robotica-ci:latest"
+CI_COMPOSE_PLUGIN = {
+    "docker-compose#v5.5.0": {
+        "config": ".buildkite/docker-compose.yml",
+        "run": "ci",
+        "mount-buildkite-agent": True,
+    }
+}
 
 # Returns a Buildkite `command` step that builds, tests, and annotates a Bazel package.
 def get_package_step(package):
@@ -12,13 +18,7 @@ def get_package_step(package):
             f"bazel build //{package}/... --build_event_json_file=bazel-events.json",
         ],
         [
-            {
-                "docker#v5.12.0": {
-                    "image": CI_IMAGE,
-                    "mount-buildkite-agent": True,
-                    "volumes": ["/var/lib/buildkite-agent/.cache/bazel:/root/.cache/bazel"],
-                }
-            },
+            CI_COMPOSE_PLUGIN,
             { "bazel-annotate#v0.1.0": { "bep_file": f"bazel-events.json"} },
         ],
     )
