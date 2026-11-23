@@ -9,6 +9,7 @@ services:
       HOME: /home/ci
       USER: ci
       PYTHONDONTWRITEBYTECODE: "1"
+      BUILD_BUDDY_SECRET:
     volumes:
       - ..:/workdir
       - /var/lib/buildkite-agent/.cache:/home/ci/.cache

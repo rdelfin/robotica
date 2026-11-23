@@ -1,6 +1,7 @@
 steps:
   - label: ":bazel: Build"
     commands:
+      - echo "common --remote_header=x-buildbuddy-api-key=$$BUILD_BUDDY_SECRET" > user.bazelrc
       - bazel build //...
     plugins:
       - docker-compose#v5.5.0:

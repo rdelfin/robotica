@@ -1,2 +1,7 @@
 common --enable_platform_specific_config
 common:windows --host_platform=//platforms:local_windows_msvc
+
+build --bes_results_url=https://app.buildbuddy.io/invocation/
+build --bes_backend=grpcs://remote.buildbuddy.io
+
+try-import %workspace%/user.bazelrc
