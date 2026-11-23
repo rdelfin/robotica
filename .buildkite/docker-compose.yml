@@ -7,6 +7,7 @@ services:
     working_dir: /workdir
     environment:
       HOME: /home/ci
+      USER: ci
       PYTHONDONTWRITEBYTECODE: "1"
     volumes:
       - ..:/workdir
