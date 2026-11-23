@@ -3,7 +3,11 @@ services:
     build:
       context: ..
       dockerfile: ci.Dockerfile
+    user: "${BUILDKITE_AGENT_UID:-1000}:${BUILDKITE_AGENT_GID:-1000}"
     working_dir: /workdir
+    environment:
+      HOME: /home/ci
+      PYTHONDONTWRITEBYTECODE: "1"
     volumes:
       - ..:/workdir
-      - /var/lib/buildkite-agent/.cache/bazel:/root/.cache/bazel
+      - /var/lib/buildkite-agent/.cache:/home/ci/.cache
